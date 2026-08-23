@@ -1,5 +1,6 @@
 import { ensureAuth, forceNewIdentity, appStartup, HEADERS } from './_lib/firebase.js';
 import { checkRateLimit } from './_lib/ratelimit.js';
+import { createJob, getJob, updateJob, generateJobId } from './_lib/store.js';
 
 function json(obj, status, extraHeaders = {}) {
   return new Response(JSON.stringify(obj), {
@@ -31,15 +32,41 @@ export default async function handler(request) {
       return json({ error: 'No image provided' }, 400);
     }
 
-    const imageBuffer = Buffer.from(body.image, 'base64');
-    const filename = body.filename || 'image.jpg';
+    const jobId = generateJobId();
+
+    await createJob(jobId, {
+      type: 'bg-remove',
+      status: 'processing',
+      image: body.image,
+      filename: body.filename || 'image.jpg',
+      createdAt: Date.now(),
+    });
+
+    // Start processing immediately (fire & forget)
+    processBgRemove(jobId, maskUrl).catch((err) => {
+      console.error('[bg-remove] background error:', err.message);
+    });
+
+    return json({ jobId, status: 'processing' }, 202);
+  } catch (err) {
+    console.error('[bg-remove] error:', err.message);
+    return json({ error: 'Internal error' }, 500);
+  }
+}
+
+async function processBgRemove(jobId, maskUrl) {
+  const job = await getJob(jobId);
+  if (!job || job.status !== 'processing') return;
+
+  try {
+    const imageBuffer = Buffer.from(job.image, 'base64');
 
     await appStartup();
     let { idToken, localId } = await ensureAuth();
 
     const buildForm = () => {
       const f = new FormData();
-      f.append('sourceImage', new Blob([imageBuffer], { type: 'image/jpeg' }), filename);
+      f.append('sourceImage', new Blob([imageBuffer], { type: 'image/jpeg' }), job.filename);
       f.append('user_id', localId);
       f.append('resize_mask', 'true');
       f.append('model_type', 'u2net');
@@ -62,7 +89,6 @@ export default async function handler(request) {
 
     let apiRes = await callMask();
     if ([401, 403, 429].includes(apiRes.status)) {
-      console.warn('[bg-remove] quota/auth error, rotating identity');
       ({ idToken, localId } = await forceNewIdentity());
       await appStartup();
       apiRes = await callMask();
@@ -71,18 +97,23 @@ export default async function handler(request) {
     if (!apiRes.ok) {
       const errText = await apiRes.text();
       console.error('[bg-remove] API error:', apiRes.status, errText.slice(0, 200));
-      return json({ error: 'Processing failed' }, 502);
+      await updateJob(jobId, { status: 'error', error: 'Processing failed' });
+      return;
     }
 
     const data = await apiRes.json();
-    if (!data.b64_mask) return json({ error: 'Invalid response' }, 502);
+    if (!data.b64_mask) {
+      await updateJob(jobId, { status: 'error', error: 'Invalid response' });
+      return;
+    }
 
-    return new Response(JSON.stringify({ mask: data.b64_mask, image: body.image }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    await updateJob(jobId, {
+      status: 'done',
+      mask: data.b64_mask,
+      image: job.image,
     });
   } catch (err) {
-    console.error('[bg-remove] error:', err.message);
-    return json({ error: 'Internal error' }, 500);
+    console.error('[bg-remove] processing error:', err.message);
+    await updateJob(jobId, { status: 'error', error: 'Processing failed' });
   }
 }

@@ -1,5 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+
+const POLL_INTERVAL = 3000;
+const MAX_POLLS = 60; // 3 minutes max
 
 export default function Upscale() {
   const [image, setImage] = useState(null);
@@ -7,7 +10,15 @@ export default function Upscale() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dragOver, setDragOver] = useState(false);
+  const [progress, setProgress] = useState('');
   const fileRef = useRef(null);
+  const pollRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearTimeout(pollRef.current);
+    };
+  }, []);
 
   const handleFile = (file) => {
     if (!file) return;
@@ -18,6 +29,7 @@ export default function Upscale() {
     setImage(file);
     setResult(null);
     setError('');
+    setProgress('');
   };
 
   const handleDrop = (e) => {
@@ -34,10 +46,56 @@ export default function Upscale() {
       reader.readAsDataURL(file);
     });
 
+  const pollForResult = useCallback(async (jobId, attempts = 0) => {
+    if (attempts >= MAX_POLLS) {
+      setLoading(false);
+      setError('Processing is taking longer than expected. Please try again.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/status?jobId=${jobId}`);
+      const data = await res.json();
+
+      if (data.status === 'done') {
+        // Convert base64 to blob URL
+        const binaryStr = atob(data.result);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'image/png' });
+        setResult(URL.createObjectURL(blob));
+        setLoading(false);
+        setProgress('');
+        return;
+      }
+
+      if (data.status === 'error') {
+        setLoading(false);
+        setError(data.error || 'Processing failed. Please try again.');
+        setProgress('');
+        return;
+      }
+
+      // Still processing — poll again
+      setProgress(`Processing... (${attempts + 1}s)`);
+      pollRef.current = setTimeout(() => {
+        pollForResult(jobId, attempts + 1);
+      }, POLL_INTERVAL);
+    } catch {
+      // Network error — retry
+      pollRef.current = setTimeout(() => {
+        pollForResult(jobId, attempts + 1);
+      }, POLL_INTERVAL);
+    }
+  }, []);
+
   const handleProcess = async () => {
     if (!image) return;
     setLoading(true);
     setError('');
+    setProgress('Uploading...');
     try {
       const base64 = await fileToBase64(image);
       const res = await fetch('/api/upscale', {
@@ -45,19 +103,31 @@ export default function Upscale() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: base64 }),
       });
-      if (!res.ok) {
-        throw new Error(res.status === 429 ? 'rate' : 'Processing failed');
+
+      if (res.status === 429) {
+        throw new Error('rate');
       }
-      const blob = await res.blob();
-      setResult(URL.createObjectURL(blob));
+
+      if (!res.ok) {
+        throw new Error('Processing failed');
+      }
+
+      const data = await res.json();
+
+      if (data.jobId) {
+        setProgress('Processing...');
+        pollForResult(data.jobId);
+      } else {
+        throw new Error('No job ID returned');
+      }
     } catch (err) {
+      setLoading(false);
+      setProgress('');
       setError(
         err.message === 'rate'
           ? "You're going too fast — try again in a minute."
           : 'Something went wrong. Please try again.'
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -73,6 +143,8 @@ export default function Upscale() {
     setImage(null);
     setResult(null);
     setError('');
+    setProgress('');
+    if (pollRef.current) clearTimeout(pollRef.current);
   };
 
   return (
@@ -96,8 +168,10 @@ export default function Upscale() {
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
-              onClick={() => fileRef.current?.click()}
-              className={`border-2 border-dashed rounded-2xl p-12 sm:p-16 text-center cursor-pointer transition-all duration-300 ${
+              onClick={() => !loading && fileRef.current?.click()}
+              className={`border-2 border-dashed rounded-2xl p-12 sm:p-16 text-center transition-all duration-300 ${
+                loading ? 'cursor-wait opacity-60' : 'cursor-pointer'
+              } ${
                 dragOver ? 'border-white/30 bg-white/[0.03]' : 'border-white/15 hover:border-white/25 hover:bg-white/[0.02]'
               }`}
             >
@@ -134,7 +208,7 @@ export default function Upscale() {
                   disabled={loading}
                   className="btn-solid h-12 px-8 text-sm disabled:opacity-50"
                 >
-                  {loading ? 'Processing...' : 'Upscale 4x'}
+                  {loading ? progress || 'Processing...' : 'Upscale 4x'}
                 </button>
               </div>
             )}
