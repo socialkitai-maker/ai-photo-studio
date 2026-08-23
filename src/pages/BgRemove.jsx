@@ -10,10 +10,8 @@ async function compositeMask(imageBase64, maskBase64) {
       canvas.height = img.height;
       const ctx = canvas.getContext('2d');
 
-      // Draw original image
       ctx.drawImage(img, 0, 0);
 
-      // Load mask and apply as alpha channel
       const maskImg = new Image();
       maskImg.onload = () => {
         ctx.globalCompositeOperation = 'destination-in';
@@ -57,16 +55,24 @@ export default function BgRemove() {
     handleFile(e.dataTransfer.files[0]);
   };
 
+  const fileToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   const handleProcess = async () => {
     if (!image) return;
     setLoading(true);
     setError('');
     try {
-      const formData = new FormData();
-      formData.append('image', image);
+      const base64 = await fileToBase64(image);
       const res = await fetch('/api/bg-remove', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, filename: image.name }),
       });
       if (!res.ok) {
         throw new Error(res.status === 429 ? 'rate' : 'Processing failed');

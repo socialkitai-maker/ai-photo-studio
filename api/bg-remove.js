@@ -26,20 +26,20 @@ export default async function handler(request) {
     const maskUrl = process.env.MASK_API_URL;
     if (!maskUrl) return json({ error: 'Service not configured' }, 500);
 
-    const formData = await request.formData();
-    const file = formData.get('image');
-    if (!file || typeof file === 'string') {
+    const body = await request.json();
+    if (!body.image) {
       return json({ error: 'No image provided' }, 400);
     }
 
-    const imageBuffer = Buffer.from(await file.arrayBuffer());
+    const imageBuffer = Buffer.from(body.image, 'base64');
+    const filename = body.filename || 'image.jpg';
 
     await appStartup();
     let { idToken, localId } = await ensureAuth();
 
     const buildForm = () => {
       const f = new FormData();
-      f.append('sourceImage', new Blob([imageBuffer], { type: file.type || 'image/jpeg' }), 'image.jpg');
+      f.append('sourceImage', new Blob([imageBuffer], { type: 'image/jpeg' }), filename);
       f.append('user_id', localId);
       f.append('resize_mask', 'true');
       f.append('model_type', 'u2net');
@@ -56,7 +56,6 @@ export default async function handler(request) {
         'pr-current-space-entitlement': HEADERS.ENTITLEMENT,
         'pr-user-bcp-language': HEADERS.LANG,
         'pr-telemetry-enabled': HEADERS.TELEMETRY,
-        'pr-user-timezone': HEADERS.TZ,
       },
       body: buildForm(),
     });
@@ -78,7 +77,7 @@ export default async function handler(request) {
     const data = await apiRes.json();
     if (!data.b64_mask) return json({ error: 'Invalid response' }, 502);
 
-    return new Response(JSON.stringify({ mask: data.b64_mask, image: imageBuffer.toString('base64') }), {
+    return new Response(JSON.stringify({ mask: data.b64_mask, image: body.image }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });

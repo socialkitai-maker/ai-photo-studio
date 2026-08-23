@@ -26,16 +26,24 @@ export default function Upscale() {
     handleFile(e.dataTransfer.files[0]);
   };
 
+  const fileToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   const handleProcess = async () => {
     if (!image) return;
     setLoading(true);
     setError('');
     try {
-      const formData = new FormData();
-      formData.append('image', image);
+      const base64 = await fileToBase64(image);
       const res = await fetch('/api/upscale', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64 }),
       });
       if (!res.ok) {
         throw new Error(res.status === 429 ? 'rate' : 'Processing failed');

@@ -26,13 +26,12 @@ export default async function handler(request) {
     const upscaleUrl = process.env.UPSCALE_API_URL;
     if (!upscaleUrl) return json({ error: 'Service not configured' }, 500);
 
-    const formData = await request.formData();
-    const file = formData.get('image');
-    if (!file || typeof file === 'string') {
+    const body = await request.json();
+    if (!body.image) {
       return json({ error: 'No image provided' }, 400);
     }
 
-    let imageBuffer = Buffer.from(await file.arrayBuffer());
+    const imageBuffer = Buffer.from(body.image, 'base64');
 
     await appStartup();
     let { idToken, localId } = await ensureAuth();
