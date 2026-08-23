@@ -1,4 +1,3 @@
-import sharp from 'sharp';
 import { ensureAuth, forceNewIdentity, appStartup, HEADERS } from './_lib/firebase.js';
 import { checkRateLimit } from './_lib/ratelimit.js';
 
@@ -79,16 +78,9 @@ export default async function handler(request) {
     const data = await apiRes.json();
     if (!data.b64_mask) return json({ error: 'Invalid response' }, 502);
 
-    const maskBuffer = Buffer.from(data.b64_mask, 'base64');
-
-    const resultBuffer = await sharp(imageBuffer)
-      .composite([{ input: maskBuffer, blend: 'dest-in' }])
-      .png()
-      .toBuffer();
-
-    return new Response(resultBuffer, {
+    return new Response(JSON.stringify({ mask: data.b64_mask, image: imageBuffer.toString('base64') }), {
       status: 200,
-      headers: { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   } catch (err) {
     console.error('[bg-remove] error:', err.message);

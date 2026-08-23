@@ -1,4 +1,3 @@
-import sharp from 'sharp';
 import { ensureAuth, forceNewIdentity, appStartup, HEADERS } from './_lib/firebase.js';
 import { checkRateLimit } from './_lib/ratelimit.js';
 
@@ -37,16 +36,6 @@ export default async function handler(request) {
 
     await appStartup();
     let { idToken, localId } = await ensureAuth();
-
-    const img = sharp(imageBuffer);
-    const meta = await img.metadata();
-    const maxDim = Math.max(meta.width || 0, meta.height || 0);
-    if (maxDim > 512) {
-      const ratio = 512 / maxDim;
-      const w = Math.round((meta.width || 512) * ratio);
-      const h = Math.round((meta.height || 512) * ratio);
-      imageBuffer = await img.resize(w, h).jpeg().toBuffer();
-    }
 
     const buildBody = () => {
       const boundary = '----boundary' + Date.now();

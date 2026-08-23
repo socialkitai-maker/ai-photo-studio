@@ -1,6 +1,37 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
+async function compositeMask(imageBase64, maskBase64) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+
+      // Draw original image
+      ctx.drawImage(img, 0, 0);
+
+      // Load mask and apply as alpha channel
+      const maskImg = new Image();
+      maskImg.onload = () => {
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.drawImage(maskImg, 0, 0, img.width, img.height);
+        ctx.globalCompositeOperation = 'source-over';
+
+        canvas.toBlob((blob) => {
+          resolve(URL.createObjectURL(blob));
+        }, 'image/png');
+      };
+      maskImg.onerror = () => reject(new Error('Failed to load mask'));
+      maskImg.src = 'data:image/png;base64,' + maskBase64;
+    };
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = 'data:image/jpeg;base64,' + imageBase64;
+  });
+}
+
 export default function BgRemove() {
   const [image, setImage] = useState(null);
   const [result, setResult] = useState(null);
@@ -40,8 +71,9 @@ export default function BgRemove() {
       if (!res.ok) {
         throw new Error(res.status === 429 ? 'rate' : 'Processing failed');
       }
-      const blob = await res.blob();
-      setResult(URL.createObjectURL(blob));
+      const data = await res.json();
+      const composited = await compositeMask(data.image, data.mask);
+      setResult(composited);
     } catch (err) {
       setError(
         err.message === 'rate'
