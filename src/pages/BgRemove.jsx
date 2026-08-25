@@ -1,8 +1,8 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-const POLL_INTERVAL = 3000;
-const MAX_POLLS = 60; // 3 minutes max
+import ProcessingOverlay from '../components/ProcessingOverlay';
+import ComparisonSlider from '../components/ComparisonSlider';
+import { playChime } from '../utils/sound';
 
 async function compositeMask(imageBase64, maskBase64) {
   return new Promise((resolve, reject) => {
@@ -36,18 +36,35 @@ async function compositeMask(imageBase64, maskBase64) {
 export default function BgRemove() {
   const [image, setImage] = useState(null);
   const [result, setResult] = useState(null);
+  const [originalUrl, setOriginalUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dragOver, setDragOver] = useState(false);
-  const [progress, setProgress] = useState('');
+  const [elapsed, setElapsed] = useState(0);
   const fileRef = useRef(null);
-  const pollRef = useRef(null);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     return () => {
-      if (pollRef.current) clearTimeout(pollRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (loading) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [loading]);
+
+  useEffect(() => {
+    if (result) playChime();
+  }, [result]);
 
   const handleFile = (file) => {
     if (!file) return;
@@ -57,8 +74,8 @@ export default function BgRemove() {
     }
     setImage(file);
     setResult(null);
+    setOriginalUrl(URL.createObjectURL(file));
     setError('');
-    setProgress('');
   };
 
   const handleDrop = (e) => {
@@ -75,49 +92,10 @@ export default function BgRemove() {
       reader.readAsDataURL(file);
     });
 
-  const pollForResult = useCallback(async (jobId, attempts = 0) => {
-    if (attempts >= MAX_POLLS) {
-      setLoading(false);
-      setError('Processing is taking longer than expected. Please try again.');
-      setProgress('');
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/status?jobId=${jobId}`);
-      const data = await res.json();
-
-      if (data.status === 'done') {
-        const composited = await compositeMask(data.image, data.mask);
-        setResult(composited);
-        setLoading(false);
-        setProgress('');
-        return;
-      }
-
-      if (data.status === 'error') {
-        setLoading(false);
-        setError(data.error || 'Processing failed. Please try again.');
-        setProgress('');
-        return;
-      }
-
-      setProgress(`Processing... (${attempts + 1}s)`);
-      pollRef.current = setTimeout(() => {
-        pollForResult(jobId, attempts + 1);
-      }, POLL_INTERVAL);
-    } catch {
-      pollRef.current = setTimeout(() => {
-        pollForResult(jobId, attempts + 1);
-      }, POLL_INTERVAL);
-    }
-  }, []);
-
   const handleProcess = async () => {
     if (!image) return;
     setLoading(true);
     setError('');
-    setProgress('Uploading...');
     try {
       const base64 = await fileToBase64(image);
       const res = await fetch('/api/bg-remove', {
@@ -131,42 +109,34 @@ export default function BgRemove() {
       }
 
       if (!res.ok) {
-        throw new Error('Processing failed');
+        throw new Error('failed');
       }
 
       const data = await res.json();
 
-      if (data.jobId) {
-        setProgress('Processing...');
-        pollForResult(data.jobId);
+      if (data.status === 'done' && data.mask) {
+        const composited = await compositeMask(data.image, data.mask);
+        setResult(composited);
       } else {
-        throw new Error('No job ID returned');
+        throw new Error('failed');
       }
     } catch (err) {
-      setLoading(false);
-      setProgress('');
       setError(
         err.message === 'rate'
           ? "You're going too fast — try again in a minute."
           : 'Something went wrong. Please try again.'
       );
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleDownload = () => {
-    if (!result) return;
-    const a = document.createElement('a');
-    a.href = result;
-    a.download = 'bg-removed.png';
-    a.click();
   };
 
   const handleReset = () => {
     setImage(null);
     setResult(null);
+    setOriginalUrl(null);
     setError('');
-    setProgress('');
-    if (pollRef.current) clearTimeout(pollRef.current);
+    setElapsed(0);
   };
 
   return (
@@ -219,18 +189,22 @@ export default function BgRemove() {
 
             {image && (
               <div className="mt-6 flex flex-col items-center gap-4">
-                <img
-                  src={URL.createObjectURL(image)}
-                  alt="Preview"
-                  className="max-h-64 rounded-xl object-contain"
-                />
-                <button
-                  onClick={handleProcess}
-                  disabled={loading}
-                  className="btn-solid h-12 px-8 text-sm disabled:opacity-50"
-                >
-                  {loading ? progress || 'Processing...' : 'Remove Background'}
-                </button>
+                <div className="relative">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt="Preview"
+                    className={`max-h-64 rounded-xl object-contain ${loading ? 'processing-pulse' : ''}`}
+                  />
+                  {loading && <ProcessingOverlay elapsed={elapsed} />}
+                </div>
+                {!loading && (
+                  <button
+                    onClick={handleProcess}
+                    className="btn-solid h-12 px-8 text-sm"
+                  >
+                    Remove Background
+                  </button>
+                )}
               </div>
             )}
 
@@ -241,12 +215,29 @@ export default function BgRemove() {
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative rounded-xl overflow-hidden bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSIjMjIyIi8+PHJlY3Qgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0iIzMzMyIvPjwvc3ZnPg==')]">
-              <img src={result} alt="Result" className="max-h-[60vh] object-contain" />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={handleDownload} className="btn-solid h-11 px-6 text-sm">
+          <div className="fade-in-up flex flex-col items-center gap-6">
+            <ComparisonSlider
+              beforeSrc={originalUrl}
+              afterSrc={result}
+              beforeLabel="Original"
+              afterLabel="No Background"
+            />
+            <div className="flex flex-col items-center gap-3">
+              <button
+                onClick={() => {
+                  if (!result) return;
+                  const a = document.createElement('a');
+                  a.href = result;
+                  a.download = 'bg-removed.png';
+                  a.click();
+                }}
+                className="btn-solid h-12 px-8 text-sm flex items-center gap-2.5"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
                 Download
               </button>
               <button onClick={handleReset} className="btn-ghost h-11 px-6 text-sm">

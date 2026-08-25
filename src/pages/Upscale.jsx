@@ -1,8 +1,7 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-const POLL_INTERVAL = 3000;
-const MAX_POLLS = 60; // 3 minutes max
+import ProcessingOverlay from '../components/ProcessingOverlay';
+import ResultView from '../components/ResultView';
 
 export default function Upscale() {
   const [image, setImage] = useState(null);
@@ -10,15 +9,27 @@ export default function Upscale() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dragOver, setDragOver] = useState(false);
-  const [progress, setProgress] = useState('');
+  const [elapsed, setElapsed] = useState(0);
   const fileRef = useRef(null);
-  const pollRef = useRef(null);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     return () => {
-      if (pollRef.current) clearTimeout(pollRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (loading) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [loading]);
 
   const handleFile = (file) => {
     if (!file) return;
@@ -29,7 +40,6 @@ export default function Upscale() {
     setImage(file);
     setResult(null);
     setError('');
-    setProgress('');
   };
 
   const handleDrop = (e) => {
@@ -46,56 +56,10 @@ export default function Upscale() {
       reader.readAsDataURL(file);
     });
 
-  const pollForResult = useCallback(async (jobId, attempts = 0) => {
-    if (attempts >= MAX_POLLS) {
-      setLoading(false);
-      setError('Processing is taking longer than expected. Please try again.');
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/status?jobId=${jobId}`);
-      const data = await res.json();
-
-      if (data.status === 'done') {
-        // Convert base64 to blob URL
-        const binaryStr = atob(data.result);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) {
-          bytes[i] = binaryStr.charCodeAt(i);
-        }
-        const blob = new Blob([bytes], { type: 'image/png' });
-        setResult(URL.createObjectURL(blob));
-        setLoading(false);
-        setProgress('');
-        return;
-      }
-
-      if (data.status === 'error') {
-        setLoading(false);
-        setError(data.error || 'Processing failed. Please try again.');
-        setProgress('');
-        return;
-      }
-
-      // Still processing — poll again
-      setProgress(`Processing... (${attempts + 1}s)`);
-      pollRef.current = setTimeout(() => {
-        pollForResult(jobId, attempts + 1);
-      }, POLL_INTERVAL);
-    } catch {
-      // Network error — retry
-      pollRef.current = setTimeout(() => {
-        pollForResult(jobId, attempts + 1);
-      }, POLL_INTERVAL);
-    }
-  }, []);
-
   const handleProcess = async () => {
     if (!image) return;
     setLoading(true);
     setError('');
-    setProgress('Uploading...');
     try {
       const base64 = await fileToBase64(image);
       const res = await fetch('/api/upscale', {
@@ -109,42 +73,39 @@ export default function Upscale() {
       }
 
       if (!res.ok) {
-        throw new Error('Processing failed');
+        throw new Error('failed');
       }
 
       const data = await res.json();
 
-      if (data.jobId) {
-        setProgress('Processing...');
-        pollForResult(data.jobId);
+      if (data.status === 'done' && data.result) {
+        // Convert base64 to blob URL
+        const binaryStr = atob(data.result);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'image/png' });
+        setResult(URL.createObjectURL(blob));
       } else {
-        throw new Error('No job ID returned');
+        throw new Error('failed');
       }
     } catch (err) {
-      setLoading(false);
-      setProgress('');
       setError(
         err.message === 'rate'
           ? "You're going too fast — try again in a minute."
           : 'Something went wrong. Please try again.'
       );
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleDownload = () => {
-    if (!result) return;
-    const a = document.createElement('a');
-    a.href = result;
-    a.download = 'upscaled.png';
-    a.click();
   };
 
   const handleReset = () => {
     setImage(null);
     setResult(null);
     setError('');
-    setProgress('');
-    if (pollRef.current) clearTimeout(pollRef.current);
+    setElapsed(0);
   };
 
   return (
@@ -198,18 +159,22 @@ export default function Upscale() {
 
             {image && (
               <div className="mt-6 flex flex-col items-center gap-4">
-                <img
-                  src={URL.createObjectURL(image)}
-                  alt="Preview"
-                  className="max-h-64 rounded-xl object-contain"
-                />
-                <button
-                  onClick={handleProcess}
-                  disabled={loading}
-                  className="btn-solid h-12 px-8 text-sm disabled:opacity-50"
-                >
-                  {loading ? progress || 'Processing...' : 'Upscale 4x'}
-                </button>
+                <div className="relative">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt="Preview"
+                    className={`max-h-64 rounded-xl object-contain ${loading ? 'processing-pulse' : ''}`}
+                  />
+                  {loading && <ProcessingOverlay elapsed={elapsed} />}
+                </div>
+                {!loading && (
+                  <button
+                    onClick={handleProcess}
+                    className="btn-solid h-12 px-8 text-sm"
+                  >
+                    Upscale 4x
+                  </button>
+                )}
               </div>
             )}
 
@@ -220,19 +185,7 @@ export default function Upscale() {
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative rounded-xl overflow-hidden">
-              <img src={result} alt="Upscaled result" className="max-h-[60vh] object-contain" />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={handleDownload} className="btn-solid h-11 px-6 text-sm">
-                Download HD
-              </button>
-              <button onClick={handleReset} className="btn-ghost h-11 px-6 text-sm">
-                Try Another
-              </button>
-            </div>
-          </div>
+          <ResultView result={result} fileName="upscaled.png" onReset={handleReset} />
         )}
       </main>
     </div>

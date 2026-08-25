@@ -1,6 +1,5 @@
 import { ensureAuth, forceNewIdentity, appStartup, HEADERS } from './_lib/firebase.js';
 import { checkRateLimit } from './_lib/ratelimit.js';
-import { createJob, getJob, updateJob, generateJobId } from './_lib/store.js';
 
 function json(obj, status, extraHeaders = {}) {
   return new Response(JSON.stringify(obj), {
@@ -8,6 +7,8 @@ function json(obj, status, extraHeaders = {}) {
     headers: { 'Content-Type': 'application/json', ...extraHeaders },
   });
 }
+
+export const config = { maxDuration: 30 };
 
 export default async function handler(request) {
   if (request.method !== 'POST') {
@@ -32,34 +33,7 @@ export default async function handler(request) {
       return json({ error: 'No image provided' }, 400);
     }
 
-    const jobId = generateJobId();
-
-    // Store job with image data (base64)
-    await createJob(jobId, {
-      type: 'upscale',
-      status: 'processing',
-      image: body.image,
-      createdAt: Date.now(),
-    });
-
-    // Start processing immediately (fire & forget)
-    processUpscale(jobId, upscaleUrl).catch((err) => {
-      console.error('[upscale] background error:', err.message);
-    });
-
-    return json({ jobId, status: 'processing' }, 202);
-  } catch (err) {
-    console.error('[upscale] error:', err.message);
-    return json({ error: 'Internal error' }, 500);
-  }
-}
-
-async function processUpscale(jobId, upscaleUrl) {
-  const job = await getJob(jobId);
-  if (!job || job.status !== 'processing') return;
-
-  try {
-    const imageBuffer = Buffer.from(job.image, 'base64');
+    const imageBuffer = Buffer.from(body.image, 'base64');
 
     await appStartup();
     let { idToken, localId } = await ensureAuth();
@@ -93,7 +67,7 @@ async function processUpscale(jobId, upscaleUrl) {
     };
 
     const callUpscale = () => {
-      const { body, boundary } = buildBody();
+      const { body: reqBody, boundary } = buildBody();
       return fetch(upscaleUrl, {
         method: 'POST',
         headers: {
@@ -107,7 +81,7 @@ async function processUpscale(jobId, upscaleUrl) {
           'pr-user-timezone': HEADERS.TZ,
           'Content-Type': 'multipart/form-data; boundary=' + boundary,
         },
-        body,
+        body: reqBody,
       });
     };
 
@@ -121,19 +95,18 @@ async function processUpscale(jobId, upscaleUrl) {
     if (!apiRes.ok) {
       const errText = await apiRes.text();
       console.error('[upscale] API error:', apiRes.status, errText.slice(0, 200));
-      await updateJob(jobId, { status: 'error', error: 'Processing failed' });
-      return;
+      return json({ error: 'Processing failed' }, 502);
     }
 
     const resultBuffer = Buffer.from(await apiRes.arrayBuffer());
     const resultBase64 = resultBuffer.toString('base64');
 
-    await updateJob(jobId, {
+    return json({
       status: 'done',
       result: resultBase64,
     });
   } catch (err) {
-    console.error('[upscale] processing error:', err.message);
-    await updateJob(jobId, { status: 'error', error: 'Processing failed' });
+    console.error('[upscale] error:', err.message);
+    return json({ error: 'Internal error' }, 500);
   }
 }
