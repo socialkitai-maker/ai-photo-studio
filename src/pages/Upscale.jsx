@@ -48,12 +48,39 @@ export default function Upscale() {
     handleFile(e.dataTransfer.files[0]);
   };
 
-  const fileToBase64 = (file) =>
+  const prepareUpscaleImage = (file) =>
     new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const maxSide = 500;
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+
+        if (Math.max(w, h) <= maxSide) {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+          return;
+        }
+
+        const ratio = maxSide / Math.max(w, h);
+        const nw = Math.max(1, Math.round(w * ratio));
+        const nh = Math.max(1, Math.round(h * ratio));
+        const canvas = document.createElement('canvas');
+        canvas.width = nw;
+        canvas.height = nh;
+        canvas.getContext('2d').drawImage(img, 0, 0, nw, nh);
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error('Failed to process image'));
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        }, 'image/png');
+      };
+      img.onerror = () => reject(new Error('Failed to read image'));
+      img.src = URL.createObjectURL(file);
     });
 
   const handleProcess = async () => {
@@ -61,7 +88,7 @@ export default function Upscale() {
     setLoading(true);
     setError('');
     try {
-      const base64 = await fileToBase64(image);
+      const base64 = await prepareUpscaleImage(image);
       const res = await fetch('/api/upscale', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -73,7 +100,12 @@ export default function Upscale() {
       }
 
       if (!res.ok) {
-        throw new Error('failed');
+        let msg = 'failed';
+        try {
+          const d = await res.json();
+          if (d.error) msg = d.error;
+        } catch {}
+        throw new Error(msg);
       }
 
       const data = await res.json();
@@ -94,6 +126,8 @@ export default function Upscale() {
       setError(
         err.message === 'rate'
           ? "You're going too fast — try again in a minute."
+          : err.message && err.message !== 'failed'
+          ? err.message
           : 'Something went wrong. Please try again.'
       );
     } finally {

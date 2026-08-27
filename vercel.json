@@ -5,11 +5,11 @@
   "functions": {
     "api/upscale.js": {
       "memory": 1024,
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "api/bg-remove.js": {
       "memory": 1024,
-      "maxDuration": 30
+      "maxDuration": 60
     }
   },
   "rewrites": [

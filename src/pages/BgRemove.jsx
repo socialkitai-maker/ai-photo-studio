@@ -4,6 +4,33 @@ import ProcessingOverlay from '../components/ProcessingOverlay';
 import ComparisonSlider from '../components/ComparisonSlider';
 import { playChime } from '../utils/sound';
 
+function maskHasAlpha(maskBase64) {
+  try {
+    const bytes = atob(maskBase64.slice(0, 44));
+    const colorType = bytes.charCodeAt(25);
+    return colorType === 4 || colorType === 6;
+  } catch {
+    return true;
+  }
+}
+
+function luminanceToAlpha(maskImg, width, height) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(maskImg, 0, 0, width, height);
+  const imgData = ctx.getImageData(0, 0, width, height);
+  const px = imgData.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const lum = (px[i] + px[i + 1] + px[i + 2]) / 3;
+    px[i] = px[i + 1] = px[i + 2] = 255;
+    px[i + 3] = lum;
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return canvas;
+}
+
 async function compositeMask(imageBase64, maskBase64) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -17,8 +44,12 @@ async function compositeMask(imageBase64, maskBase64) {
 
       const maskImg = new Image();
       maskImg.onload = () => {
+        const mask = maskHasAlpha(maskBase64)
+          ? maskImg
+          : luminanceToAlpha(maskImg, img.width, img.height);
+
         ctx.globalCompositeOperation = 'destination-in';
-        ctx.drawImage(maskImg, 0, 0, img.width, img.height);
+        ctx.drawImage(mask, 0, 0, img.width, img.height);
         ctx.globalCompositeOperation = 'source-over';
 
         canvas.toBlob((blob) => {
@@ -109,7 +140,12 @@ export default function BgRemove() {
       }
 
       if (!res.ok) {
-        throw new Error('failed');
+        let msg = 'failed';
+        try {
+          const d = await res.json();
+          if (d.error) msg = d.error;
+        } catch {}
+        throw new Error(msg);
       }
 
       const data = await res.json();
@@ -124,6 +160,8 @@ export default function BgRemove() {
       setError(
         err.message === 'rate'
           ? "You're going too fast — try again in a minute."
+          : err.message && err.message !== 'failed'
+          ? err.message
           : 'Something went wrong. Please try again.'
       );
     } finally {
