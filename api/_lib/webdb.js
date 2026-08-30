@@ -12,8 +12,9 @@ export function getWebPool() {
       ssl: process.env.WEB_DB_SSL === 'false' ? false : { rejectUnauthorized: false },
       max: 2,
       maxUses: 20,
-      idleTimeoutMillis: 20000,
-      connectionTimeoutMillis: 5000,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+      statement_timeout: 15000,
     });
   }
   return pool;

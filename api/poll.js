@@ -52,6 +52,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'method not allowed' });
   } catch (err) {
     console.error('[poll] error:', err.message);
-    return res.status(500).json({ error: 'poll failed' });
+    return res.status(503).json({ error: 'poll temporarily unavailable' });
   }
 }
