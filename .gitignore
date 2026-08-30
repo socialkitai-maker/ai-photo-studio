@@ -5,4 +5,5 @@ dist
 *.log
 *.md
 !README.md
-.vercel
+HIDDEN_LINKS_NOTE.md
+o.vercel

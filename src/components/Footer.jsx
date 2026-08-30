@@ -120,6 +120,11 @@ export default function Footer() {
           </Magnetic>
         </div>
       </div>
+
+      {/* Crawlable resource link (visually hidden) */}
+      <span style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <Link to="/links">resource links</Link>
+      </span>
     </footer>
   );
 }

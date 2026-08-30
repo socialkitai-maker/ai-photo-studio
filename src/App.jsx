@@ -15,6 +15,7 @@ const About = lazy(() => import('./pages/About'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Faq = lazy(() => import('./pages/Faq'));
+const Links = lazy(() => import('./pages/Links'));
 const Admin = lazy(() => import('./pages/Admin'));
 
 function PageLoader() {
@@ -53,6 +54,7 @@ export default function App() {
 
         {/* Trust pages */}
         <Route path="/about" element={<About />} />
+        <Route path="/links" element={<Links />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/faq" element={<Faq />} />
