@@ -36,7 +36,6 @@ function Magnetic({ children, strength = 10, className }) {
 }
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
   return (
     <footer
       className="relative overflow-hidden py-10 sm:py-14 px-4 sm:px-6"
@@ -103,15 +102,21 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Bottom row: Copyright & Admin */}
+        {/* Bottom row: credit & support */}
         <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4 mt-4">
           <p className="text-xs" style={{ fontFamily: "'Outfit', sans-serif", color: 'rgba(255,255,255,0.4)' }}>
-            &copy; {currentYear} AI Photo Studio. All rights reserved.
+            Made with intelligence by <span style={{ color: 'rgba(255,220,180,0.9)' }}>syco</span>
           </p>
           <Magnetic strength={6}>
-            <Link to="/admin" className="text-[10px] opacity-20 hover:opacity-100 transition-opacity" style={{ fontFamily: "'Outfit', sans-serif", color: '#fff' }}>
-              Admin
-            </Link>
+            <a
+              href="https://bondin.io/sycoishere"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] underline-offset-2 hover:underline transition-colors"
+              style={{ fontFamily: "'Outfit', sans-serif", color: 'rgba(255,220,180,0.8)' }}
+            >
+              Support me &rsaquo;
+            </a>
           </Magnetic>
         </div>
       </div>
