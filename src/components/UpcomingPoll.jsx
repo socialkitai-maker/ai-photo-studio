@@ -17,7 +17,7 @@ const UPCOMING = [
   { label: 'AI Background Replace', note: 'Live in Telegram', live: true },
   { label: 'AI Voice Generator', note: 'Live in Telegram', live: true },
   { label: 'AI Video Generator', note: 'Live in Telegram', live: true },
-  { label: 'Batch Background Remover', note: 'Next on the website', live: false },
+  { label: 'AI Voice Generator (Hindi)', note: 'Next on the website', live: false },
   { label: 'Premium plans on the web', note: 'Next on the website', live: false },
 ];
 
