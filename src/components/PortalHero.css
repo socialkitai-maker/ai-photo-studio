@@ -142,6 +142,17 @@
 .ph-reel-label { font-size: 13px; color: #fff; }
 .ph-num-big { font-family: 'Viaoda Libre', serif; color: #fff; }
 
+.ph-reel-link { display: block; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.ph-reel-link .ph-reel-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.ph-reel-link:hover .ph-reel-card,
+.ph-reel-link:focus-visible .ph-reel-card {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,220,180,0.35);
+  cursor: pointer;
+}
+.ph-reel-link .ph-reel-label { transition: color 0.2s ease; }
+.ph-reel-link:hover .ph-reel-label { color: rgba(255,220,180,1); }
+
 /* tablet scene1 */
 .ph-s1-tablet {
   display: none; position: absolute; inset: 0; z-index: 1;

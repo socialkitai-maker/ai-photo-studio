@@ -27,14 +27,18 @@ function BrandMark({ size }) {
   );
 }
 
-function ReelCard({ image, dotSize = 9, children }) {
-  return (
+function ReelCard({ image, dotSize = 9, href, children }) {
+  const card = (
     <div className="ph-reel-card" style={{ backgroundImage: `url('${image}')` }}>
       <div className="ph-card-grad"></div>
       <div className="ph-card-blur"></div>
       <div className="ph-card-content">{children}</div>
     </div>
   );
+  if (href) {
+    return <Link to={href} className="ph-reel-link">{card}</Link>;
+  }
+  return card;
 }
 
 function PlayRow({ dotSize = 9, label, num, numStyle }) {
@@ -348,10 +352,10 @@ export default function PortalHero() {
             {/* tablet */}
             <div className="ph-s1-tablet">
               <div className="ph-reveal ph-tablet-cards" data-delay="550">
-                <ReelCard image="https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160507_2ccbb4eb-1469-484f-af25-59168ad9a233-0c7429.webp&w=1280&q=85">
+                <ReelCard href="/tools/bg-remove" image="https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160507_2ccbb4eb-1469-484f-af25-59168ad9a233-0c7429.webp&w=1280&q=85">
                   <PlayRow label="Background Remover" />
                 </ReelCard>
-                <ReelCard image="https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160706_1c153d04-0dfb-4ac9-a4ef-e74f301c329c-8b9d4e.webp&w=1280&q=85">
+                <ReelCard href="/tools/upscale" image="https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160706_1c153d04-0dfb-4ac9-a4ef-e74f301c329c-8b9d4e.webp&w=1280&q=85">
                   <PlayRow label="Upscaler" />
                 </ReelCard>
               </div>
@@ -360,14 +364,18 @@ export default function PortalHero() {
             {/* desktop */}
             <div className="ph-s1-desktop">
               <div className="ph-reveal ph-s1-desk-cards" data-delay="550">
-                <div className="ph-reel-card ph-desk-card" style={{ backgroundImage: "url('https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160507_2ccbb4eb-1469-484f-af25-59168ad9a233-0c7429.webp&w=1280&q=85')" }}>
-                  <div className="ph-card-grad"></div><div className="ph-card-blur"></div>
-                  <div className="ph-card-content"><PlayRow dotSize={11} label="Background Remover" /></div>
-                </div>
-                <div className="ph-reel-card ph-desk-card" style={{ backgroundImage: "url('https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160706_1c153d04-0dfb-4ac9-a4ef-e74f301c329c-8b9d4e.webp&w=1280&q=85')" }}>
-                  <div className="ph-card-grad"></div><div className="ph-card-blur"></div>
-                  <div className="ph-card-content"><PlayRow dotSize={11} label="Upscaler" /></div>
-                </div>
+                <Link to="/tools/bg-remove" className="ph-reel-link">
+                  <div className="ph-reel-card ph-desk-card" style={{ backgroundImage: "url('https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160507_2ccbb4eb-1469-484f-af25-59168ad9a233-0c7429.webp&w=1280&q=85')" }}>
+                    <div className="ph-card-grad"></div><div className="ph-card-blur"></div>
+                    <div className="ph-card-content"><PlayRow dotSize={11} label="Background Remover" /></div>
+                  </div>
+                </Link>
+                <Link to="/tools/upscale" className="ph-reel-link">
+                  <div className="ph-reel-card ph-desk-card" style={{ backgroundImage: "url('https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160706_1c153d04-0dfb-4ac9-a4ef-e74f301c329c-8b9d4e.webp&w=1280&q=85')" }}>
+                    <div className="ph-card-grad"></div><div className="ph-card-blur"></div>
+                    <div className="ph-card-content"><PlayRow dotSize={11} label="Upscaler" /></div>
+                  </div>
+                </Link>
               </div>
             </div>
 
