@@ -1,7 +1,13 @@
 import { useState, useRef, useCallback } from 'react';
 
-export default function ComparisonSlider({ beforeSrc, afterSrc, beforeLabel = 'Original', afterLabel = 'Result' }) {
-  const [pos, setPos] = useState(50); // percentage
+export default function ComparisonSlider({
+  beforeSrc,
+  afterSrc,
+  beforeLabel = 'Original',
+  afterLabel = 'Result',
+  checkerboard = false,
+}) {
+  const [pos, setPos] = useState(50);
   const containerRef = useRef(null);
   const dragging = useRef(false);
 
@@ -37,6 +43,17 @@ export default function ComparisonSlider({ beforeSrc, afterSrc, beforeLabel = 'O
       className="relative w-full max-w-[640px] overflow-hidden rounded-2xl select-none touch-none"
       style={{ aspectRatio: '4 / 3' }}
     >
+      {/* Checkerboard background for transparent images */}
+      {checkerboard && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'repeating-conic-gradient(#404040 0% 25%, #505050 0% 50%) 0 0 / 20px 20px',
+            borderRadius: 'inherit',
+          }}
+        />
+      )}
+
       {/* After image (full, behind) */}
       <img
         src={afterSrc}
@@ -50,10 +67,19 @@ export default function ComparisonSlider({ beforeSrc, afterSrc, beforeLabel = 'O
         className="absolute inset-0 overflow-hidden pointer-events-none"
         style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
       >
+        {/* Checkerboard behind before image too if needed */}
+        {checkerboard && (
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'repeating-conic-gradient(#404040 0% 25%, #505050 0% 50%) 0 0 / 20px 20px',
+            }}
+          />
+        )}
         <img
           src={beforeSrc}
           alt="Before"
-          className="w-full h-full object-contain"
+          className="absolute inset-0 w-full h-full object-contain"
           draggable={false}
         />
       </div>

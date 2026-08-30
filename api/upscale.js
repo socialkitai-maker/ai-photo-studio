@@ -1,5 +1,6 @@
 import { ensureAuth, forceNewIdentity, appStartup, HEADERS } from './_lib/firebase.js';
-import { checkRateLimit } from './_lib/ratelimit.js';
+import { checkRateLimit, getClientIp } from './_lib/ratelimit.js';
+import { recordUsage } from './_lib/stats.js';
 
 function json(res, obj, status = 200, extraHeaders = {}) {
   for (const [k, v] of Object.entries(extraHeaders)) res.setHeader(k, v);
@@ -27,6 +28,16 @@ function readJson(req) {
 export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
+  const startTime = Date.now();
+  const ip = getClientIp(req);
+
+  const _end = res.end;
+  res.end = function(chunk, encoding, callback) {
+    const ok = res.statusCode === 200;
+    recordUsage({ tool: 'upscale', ok, ms: Date.now() - startTime, ip, errCode: ok ? null : res.statusCode });
+    return _end.call(this, chunk, encoding, callback);
+  };
+
   if (req.method !== 'POST') {
     return json(res, { error: 'Method not allowed' }, 405);
   }

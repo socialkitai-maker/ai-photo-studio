@@ -8,7 +8,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
+  overflow-x: clip;
   margin: 0;
   padding: 0;
 }
@@ -272,6 +272,39 @@ button {
   user-select: none;
 }
 
+/* === Ambient Animated Background === */
+@keyframes ambient-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(var(--dx, 40px), var(--dy, -60px), 0) scale(1.14); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes ambient-aurora {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ambient-grain {
+  0%, 100% { background-position: 0 0; }
+  50% { background-position: -60px 30px; }
+}
+
+.ambient-orb {
+  animation-name: ambient-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.ambient-aurora {
+  animation: ambient-aurora 110s linear infinite;
+}
+
+.ambient-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 300px 300px;
+  animation: ambient-grain 1.6s steps(2) infinite;
+}
+
 /* === Reduced Motion === */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -288,4 +321,29 @@ button {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Checkerboard pattern for transparent image backgrounds */
+.checkerboard-bg {
+  background: repeating-conic-gradient(#808080 0% 25%, #b0b0b0 0% 50%) 0 0 / 20px 20px;
+}
+
+/* Dark tool card styles */
+.tool-card-dark {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 32px;
+  transition: all 0.35s ease;
+}
+.tool-card-dark:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+}
+
+/* Warm gold accent border */
+.gold-accent-left {
+  border-left: 2px solid rgba(255, 220, 180, 0.3);
+  padding-left: 16px;
 }

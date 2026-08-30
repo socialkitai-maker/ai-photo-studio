@@ -1,8 +1,15 @@
-import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import ToolLayout from '../components/ToolLayout';
 import ProcessingOverlay from '../components/ProcessingOverlay';
 import ComparisonSlider from '../components/ComparisonSlider';
+import { PageMeta } from '../hooks/usePageMeta';
 import { playChime } from '../utils/sound';
+
+const SAMPLES = [
+  { url: 'https://images.unsplash.com/photo-1529778873920-4da4926a72c2?w=600&q=80', label: 'Cat' },
+  { url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80', label: 'Portrait' },
+];
 
 function maskHasAlpha(maskBase64) {
   try {
@@ -64,21 +71,48 @@ async function compositeMask(imageBase64, maskBase64) {
   });
 }
 
+const VALID_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_SIZE = 20 * 1024 * 1024;
+
 export default function BgRemove() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [image, setImage] = useState(null);
   const [result, setResult] = useState(null);
   const [originalUrl, setOriginalUrl] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [retryCountdown, setRetryCountdown] = useState(0);
   const fileRef = useRef(null);
   const timerRef = useRef(null);
+  const retryRef = useRef(null);
 
+  // Cleanup URLs on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (retryRef.current) clearInterval(retryRef.current);
+      if (originalUrl) URL.revokeObjectURL(originalUrl);
+      if (previewUrl && previewUrl !== originalUrl) URL.revokeObjectURL(previewUrl);
+      if (result) URL.revokeObjectURL(result);
     };
+  }, []);
+
+  // Accept image from another tool via navigation state
+  useEffect(() => {
+    if (location.state?.imageUrl) {
+      fetch(location.state.imageUrl)
+        .then(r => r.blob())
+        .then(blob => {
+          const file = new File([blob], 'from-upscaler.png', { type: blob.type || 'image/png' });
+          handleFile(file);
+        })
+        .catch(() => {});
+    }
   }, []);
 
   useEffect(() => {
@@ -97,22 +131,57 @@ export default function BgRemove() {
     if (result) playChime();
   }, [result]);
 
-  const handleFile = (file) => {
+  const handleFile = useCallback((file) => {
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      setError('File too large. Max 20MB.');
+    if (!VALID_TYPES.includes(file.type)) {
+      setError('Invalid file type. Please use JPEG, PNG, or WebP.');
       return;
     }
+    if (file.size > MAX_SIZE) {
+      setError('File too large. Maximum size is 20MB.');
+      return;
+    }
+    // Cleanup old URLs
+    if (originalUrl) URL.revokeObjectURL(originalUrl);
+    if (previewUrl && previewUrl !== originalUrl) URL.revokeObjectURL(previewUrl);
+    if (result) URL.revokeObjectURL(result);
+
+    const url = URL.createObjectURL(file);
     setImage(file);
     setResult(null);
-    setOriginalUrl(URL.createObjectURL(file));
+    setOriginalUrl(url);
+    setPreviewUrl(url);
     setError('');
-  };
+  }, [originalUrl, previewUrl, result]);
 
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
     handleFile(e.dataTransfer.files[0]);
+  };
+
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) handleFile(file);
+        return;
+      }
+    }
+  };
+
+  const handleSample = async (url) => {
+    setError('');
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const file = new File([blob], 'sample.jpg', { type: 'image/jpeg' });
+      handleFile(file);
+    } catch {
+      setError('Failed to load sample image.');
+    }
   };
 
   const fileToBase64 = (file) =>
@@ -123,8 +192,22 @@ export default function BgRemove() {
       reader.readAsDataURL(file);
     });
 
+  const startRetryCountdown = (seconds) => {
+    setRetryCountdown(seconds);
+    if (retryRef.current) clearInterval(retryRef.current);
+    retryRef.current = setInterval(() => {
+      setRetryCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(retryRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const handleProcess = async () => {
-    if (!image) return;
+    if (!image || retryCountdown > 0) return;
     setLoading(true);
     setError('');
     try {
@@ -136,6 +219,8 @@ export default function BgRemove() {
       });
 
       if (res.status === 429) {
+        const retryAfter = parseInt(res.headers.get('Retry-After') || '60', 10);
+        startRetryCountdown(retryAfter);
         throw new Error('rate');
       }
 
@@ -157,49 +242,61 @@ export default function BgRemove() {
         throw new Error('failed');
       }
     } catch (err) {
-      setError(
-        err.message === 'rate'
-          ? "You're going too fast — try again in a minute."
-          : err.message && err.message !== 'failed'
-          ? err.message
-          : 'Something went wrong. Please try again.'
-      );
+      if (err.message !== 'rate') {
+        setError(
+          err.message && err.message !== 'failed'
+            ? err.message
+            : 'Something went wrong. Please try again.'
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleReset = () => {
+    if (originalUrl) URL.revokeObjectURL(originalUrl);
+    if (previewUrl && previewUrl !== originalUrl) URL.revokeObjectURL(previewUrl);
+    if (result) URL.revokeObjectURL(result);
     setImage(null);
     setResult(null);
     setOriginalUrl(null);
+    setPreviewUrl(null);
     setError('');
     setElapsed(0);
   };
 
-  return (
-    <div className="min-h-screen bg-black">
-      <header className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/8">
-        <Link to="/" className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m12 19-7-7 7-7" />
-            <path d="M19 12H5" />
-          </svg>
-          Back
-        </Link>
-        <h1 className="text-sm font-semibold text-white">Background Remover</h1>
-        <div className="w-16" />
-      </header>
+  const handleCrossTool = () => {
+    navigate('/tools/upscale', { state: { imageUrl: result } });
+  };
 
-      <main className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+  return (
+    <ToolLayout title="Background Remover" otherToolName="Upscale 4x" otherToolLink="/tools/upscale">
+      <PageMeta
+        title="Remove Background from Image Free — AI Photo Studio"
+        description="Remove backgrounds from any image instantly with AI. Get transparent PNGs in seconds. Free, no signup required."
+        canonical="/tools/bg-remove"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://aiphotostudio.vercel.app/' },
+            { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://aiphotostudio.vercel.app/tools' },
+            { '@type': 'ListItem', position: 3, name: 'Background Remover', item: 'https://aiphotostudio.vercel.app/tools/bg-remove' },
+          ],
+        }}
+      />
+
+      <div onPaste={handlePaste}>
         {!result ? (
           <>
+            {/* Upload area */}
             <div
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
               onClick={() => !loading && fileRef.current?.click()}
-              className={`border-2 border-dashed rounded-2xl p-12 sm:p-16 text-center transition-all duration-300 ${
+              className={`border-2 border-dashed rounded-2xl p-10 sm:p-14 text-center transition-all duration-300 ${
                 loading ? 'cursor-wait opacity-60' : 'cursor-pointer'
               } ${
                 dragOver ? 'border-white/30 bg-white/[0.03]' : 'border-white/15 hover:border-white/25 hover:bg-white/[0.02]'
@@ -212,24 +309,59 @@ export default function BgRemove() {
                 className="hidden"
                 onChange={(e) => handleFile(e.target.files[0])}
               />
-              <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white/40">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white/40">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
               </div>
-              <p className="text-white/60 text-sm mb-2">
-                {image ? image.name : 'Drag & drop an image or click to browse'}
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>
+                {image ? image.name : 'Drag & drop, click to browse, or paste from clipboard'}
               </p>
-              <p className="text-white/30 text-xs">JPEG, PNG, WebP &middot; Max 20MB</p>
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
+                JPEG, PNG, WebP · Max 20MB
+              </p>
             </div>
 
+            {/* Try a sample */}
+            {!image && (
+              <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Or try a sample
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                  {SAMPLES.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSample(s.url)}
+                      style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        background: '#1a1a1a',
+                        padding: 0,
+                        transition: 'border-color 0.2s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,220,180,0.4)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'}
+                    >
+                      <img src={s.url} alt={s.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Preview + process button */}
             {image && (
               <div className="mt-6 flex flex-col items-center gap-4">
                 <div className="relative">
                   <img
-                    src={URL.createObjectURL(image)}
+                    src={previewUrl}
                     alt="Preview"
                     className={`max-h-64 rounded-xl object-contain ${loading ? 'processing-pulse' : ''}`}
                   />
@@ -238,17 +370,27 @@ export default function BgRemove() {
                 {!loading && (
                   <button
                     onClick={handleProcess}
+                    disabled={retryCountdown > 0}
                     className="btn-solid h-12 px-8 text-sm"
+                    style={retryCountdown > 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                   >
-                    Remove Background
+                    {retryCountdown > 0 ? `Try again in ${retryCountdown}s` : 'Remove Background'}
                   </button>
                 )}
               </div>
             )}
 
+            {/* Error */}
             {error && (
               <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
                 {error}
+              </div>
+            )}
+
+            {/* Rate limit countdown */}
+            {retryCountdown > 0 && !error && (
+              <div className="mt-4 p-3 rounded-xl border text-sm text-center" style={{ borderColor: 'rgba(255,220,180,0.2)', background: 'rgba(255,220,180,0.05)', color: 'rgba(255,220,180,0.8)' }}>
+                Rate limited — try again in {retryCountdown}s
               </div>
             )}
           </>
@@ -259,6 +401,7 @@ export default function BgRemove() {
               afterSrc={result}
               beforeLabel="Original"
               afterLabel="No Background"
+              checkerboard
             />
             <div className="flex flex-col items-center gap-3">
               <button
@@ -278,13 +421,22 @@ export default function BgRemove() {
                 </svg>
                 Download
               </button>
-              <button onClick={handleReset} className="btn-ghost h-11 px-6 text-sm">
-                Try Another
-              </button>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button onClick={handleReset} className="btn-ghost h-11 px-6 text-sm">
+                  Try Another
+                </button>
+                <button
+                  onClick={handleCrossTool}
+                  className="btn-ghost h-11 px-6 text-sm"
+                  style={{ borderColor: 'rgba(255,220,180,0.3)', color: 'rgba(255,220,180,0.85)' }}
+                >
+                  Upscale this result →
+                </button>
+              </div>
             </div>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </ToolLayout>
   );
 }
