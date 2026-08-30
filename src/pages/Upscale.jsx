@@ -262,18 +262,35 @@ export default function Upscale() {
   return (
     <ToolLayout title="4x HD Upscaler" otherToolName="Remove BG" otherToolLink="/tools/bg-remove">
       <PageMeta
-        title="Upscale Image 4x Free — AI Photo Studio"
-        description="Upscale images up to 4× without losing quality. AI-powered enhancement for crisp, detailed results. Free, no signup."
+        title="Image Upscaler — Upscale Photo to 4x Free, No Quality Loss"
+        description="Upscale images to 4x resolution free with AI — no quality loss, no signup. Enhance low-resolution JPG, PNG & WebP photos to crisp HD results."
         canonical="/tools/upscale"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://aiphotostudio.vercel.app/' },
-            { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://aiphotostudio.vercel.app/tools' },
-            { '@type': 'ListItem', position: 3, name: 'Image Upscaler', item: 'https://aiphotostudio.vercel.app/tools/upscale' },
-          ],
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            name: 'AI Photo Studio — Image Upscaler',
+            url: 'https://aiphotostudio.vercel.app/tools/upscale',
+            applicationCategory: 'MultimediaApplication',
+            operatingSystem: 'All',
+            featureList: [
+              'Upscale images to 4x resolution with AI',
+              'Free unlimited image enhancement',
+              'No quality loss or pixelation',
+              'No signup required',
+              'JPG, PNG and WebP support',
+            ],
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://aiphotostudio.vercel.app/' },
+              { '@type': 'ListItem', position: 2, name: 'Image Upscaler', item: 'https://aiphotostudio.vercel.app/tools/upscale' },
+            ],
+          },
+        ]}
       />
 
       <div onPaste={handlePaste}>

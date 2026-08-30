@@ -6,36 +6,59 @@ import Footer from '../components/Footer';
 import Reveal from '../components/Reveal';
 
 export default function HowToRemoveBackground() {
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Is it completely free to remove background from images?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes, our background removal tool is 100% free with no hidden fees or subscriptions."
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Remove Background from an Image Free",
+      "description": "Step-by-step guide to remove the background from any image online for free using AI.",
+      "totalTime": "PT30S",
+      "step": [
+        { "@type": "HowToStep", "name": "Upload your image", "text": "Click the upload box or drag & drop a JPG, PNG or WebP image." },
+        { "@type": "HowToStep", "name": "Wait for AI processing", "text": "Our AI precisely masks out the background in 3-5 seconds." },
+        { "@type": "HowToStep", "name": "Preview the result", "text": "Check the clean isolation against a transparent checkerboard background." },
+        { "@type": "HowToStep", "name": "Download your free transparent PNG", "text": "Save the high-quality transparent PNG directly to your device." },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is it completely free to remove background from images?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, our background removal tool is 100% free with no hidden fees, no signup and no watermarks."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long does it take to process an image?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The AI removes the background from most images in under 5 seconds."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What image formats are supported for background removal?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You can upload JPG, PNG and WebP files and download the result as a transparent PNG."
+          }
         }
-      },
-      {
-        "@type": "Question",
-        "name": "How long does it take to process an image?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "The AI processes most images in under 5 seconds."
-        }
-      }
-    ]
-  };
+      ]
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-[#0a0608] text-white pt-24 pb-12 flex flex-col font-['Outfit']">
       <PageMeta 
-        title="How to Remove Background from Image Free — AI Photo Studio" 
-        description="Learn how to quickly and easily remove the background from any image for free using our advanced AI tool. Step-by-step guide included." 
+        title="How to Remove Background from an Image Free (Step-by-Step Guide)" 
+        description="Learn how to remove the background from any image free online — no signup, no watermarks. Our step-by-step guide works for product photos, portraits and logos." 
         canonical="/how-to/remove-background"
-        jsonLd={faqJsonLd}
+        jsonLd={jsonLd}
       />
       <SiteNav />
       

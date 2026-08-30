@@ -8,6 +8,9 @@ import Upscale from './pages/Upscale';
 const Tools = lazy(() => import('./pages/Tools'));
 const HowToRemoveBackground = lazy(() => import('./pages/HowToRemoveBackground'));
 const HowToUpscaleImage = lazy(() => import('./pages/HowToUpscaleImage'));
+const HowToRemoveGreenScreen = lazy(() => import('./pages/HowToRemoveGreenScreen'));
+const HowToRemoveBackgroundProductPhotos = lazy(() => import('./pages/HowToRemoveBackgroundProductPhotos'));
+const HowToUpscaleTo4k = lazy(() => import('./pages/HowToUpscaleTo4k'));
 const About = lazy(() => import('./pages/About'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
@@ -44,6 +47,9 @@ export default function App() {
         <Route path="/tools" element={<Tools />} />
         <Route path="/how-to/remove-background" element={<HowToRemoveBackground />} />
         <Route path="/how-to/upscale-image" element={<HowToUpscaleImage />} />
+        <Route path="/how-to/remove-green-screen" element={<HowToRemoveGreenScreen />} />
+        <Route path="/how-to/remove-background-product-photos" element={<HowToRemoveBackgroundProductPhotos />} />
+        <Route path="/how-to/upscale-to-4k" element={<HowToUpscaleTo4k />} />
 
         {/* Trust pages */}
         <Route path="/about" element={<About />} />

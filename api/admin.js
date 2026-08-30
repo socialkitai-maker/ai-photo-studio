@@ -114,8 +114,9 @@ export default async function handler(req, res) {
     if (!payload) {
       return json(res, { error: 'Unauthorized' }, 401);
     }
-    
-    return json(res, getStats());
+
+    const stats = await getStats();
+    return json(res, stats);
   }
   
   // DELETE = logout

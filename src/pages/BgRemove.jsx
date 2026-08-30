@@ -273,18 +273,35 @@ export default function BgRemove() {
   return (
     <ToolLayout title="Background Remover" otherToolName="Upscale 4x" otherToolLink="/tools/upscale">
       <PageMeta
-        title="Remove Background from Image Free — AI Photo Studio"
-        description="Remove backgrounds from any image instantly with AI. Get transparent PNGs in seconds. Free, no signup required."
+        title="Background Remover — Remove Image Background Online Free, No Signup"
+        description="Remove the background from any image online for free in seconds. AI background remover for JPG, PNG & WebP — instant transparent PNG download, no signup."
         canonical="/tools/bg-remove"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://aiphotostudio.vercel.app/' },
-            { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://aiphotostudio.vercel.app/tools' },
-            { '@type': 'ListItem', position: 3, name: 'Background Remover', item: 'https://aiphotostudio.vercel.app/tools/bg-remove' },
-          ],
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            name: 'AI Photo Studio — Background Remover',
+            url: 'https://aiphotostudio.vercel.app/tools/bg-remove',
+            applicationCategory: 'MultimediaApplication',
+            operatingSystem: 'All',
+            featureList: [
+              'Remove image background with AI',
+              'Free unlimited background removal',
+              'Transparent PNG output',
+              'No signup required',
+              'JPG, PNG and WebP support',
+            ],
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://aiphotostudio.vercel.app/' },
+              { '@type': 'ListItem', position: 2, name: 'Background Remover', item: 'https://aiphotostudio.vercel.app/tools/bg-remove' },
+            ],
+          },
+        ]}
       />
 
       <div onPaste={handlePaste}>

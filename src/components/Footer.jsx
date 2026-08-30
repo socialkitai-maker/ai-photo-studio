@@ -87,11 +87,18 @@ export default function Footer() {
             { to: '/privacy', label: 'Privacy' },
             { to: '/terms', label: 'Terms' },
             { to: '/faq', label: 'FAQ' },
+            { to: 'https://bondin.io/sycoishere', label: 'Support', external: true },
           ].map((l) => (
             <Magnetic key={l.to} strength={8}>
-              <Link to={l.to} className="inline-block hover:text-white transition-colors">
-                {l.label}
-              </Link>
+              {l.external ? (
+                <a href={l.to} target="_blank" rel="noopener noreferrer" className="inline-block hover:text-white transition-colors">
+                  {l.label}
+                </a>
+              ) : (
+                <Link to={l.to} className="inline-block hover:text-white transition-colors">
+                  {l.label}
+                </Link>
+              )}
             </Magnetic>
           ))}
         </div>

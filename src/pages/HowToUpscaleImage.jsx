@@ -6,28 +6,50 @@ import Footer from '../components/Footer';
 import Reveal from '../components/Reveal';
 
 export default function HowToUpscaleImage() {
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Can I upscale an image without losing quality?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes, AI upscaling models analyze the image and generate new pixels to increase resolution while preserving crisp details, unlike traditional resizing."
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Upscale an Image Without Losing Quality",
+      "description": "Step-by-step guide to upscale a low-resolution photo to 4x quality for free using AI.",
+      "totalTime": "PT30S",
+      "step": [
+        { "@type": "HowToStep", "name": "Upload your low-resolution image", "text": "Upload any JPG, PNG or WebP image you want to enhance." },
+        { "@type": "HowToStep", "name": "Select 4x upscaling", "text": "Our AI analyzes and regenerates the image at 4x resolution." },
+        { "@type": "HowToStep", "name": "Download the HD result", "text": "Save the crisp, high-resolution image to your device for free." },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Can I upscale an image without losing quality?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, AI upscaling models analyze the image and generate new pixels to increase resolution while preserving crisp details, unlike traditional resizing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is the image upscaler really free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, upscaling images to 4x is completely free with no signup and no watermarks."
+          }
         }
-      }
-    ]
-  };
+      ]
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-[#0a0608] text-white pt-24 pb-12 flex flex-col font-['Outfit']">
       <PageMeta 
-        title="How to Upscale an Image Without Losing Quality — AI Photo Studio" 
-        description="Learn how to upscale low-resolution images up to 4x using AI, maintaining perfect quality and sharpness for free." 
+        title="How to Upscale an Image Without Losing Quality (Free 4x Guide)" 
+        description="Learn how to upscale low-resolution images to 4x with AI — free, no quality loss, no signup. Enhance JPG, PNG & WebP photos to crisp HD in seconds." 
         canonical="/how-to/upscale-image"
-        jsonLd={faqJsonLd}
+        jsonLd={jsonLd}
       />
       <SiteNav />
       

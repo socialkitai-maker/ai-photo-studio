@@ -37,8 +37,8 @@ export default function Tools() {
   return (
     <div className="min-h-screen bg-[#0a0608] text-white pt-24 pb-12 flex flex-col">
       <PageMeta
-        title="AI Photo Tools — Free AI Image Editor"
-        description="Access our suite of free AI-powered photo editing tools. Remove backgrounds or upscale images in seconds."
+        title="Free AI Photo Tools — Online Background Remover & Upscaler"
+        description="Free AI photo editing tools: remove image backgrounds and upscale photos to 4x online. No signup, no watermarks, unlimited use."
         canonical="/tools"
       />
       <SiteNav />

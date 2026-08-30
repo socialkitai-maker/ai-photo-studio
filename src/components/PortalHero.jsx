@@ -326,56 +326,47 @@ export default function PortalHero() {
               <div className="ph-nav-group">
                 <Link className="ph-navlink" to="/tools/upscale">Free</Link>
                 <a className="ph-navlink" href="#">Guides</a>
-                <a className="ph-navlink" href="#">Connect</a>
+                <a className="ph-navlink" href="https://bondin.io/sycoishere" target="_blank" rel="noopener noreferrer">Support</a>
               </div>
             </div>
           </nav>
 
           {/* SCENE 1 UI */}
           <div id="ph-scene1-ui" ref={scene1UIRef}>
-            {/* mobile */}
-            <div className="ph-s1-mobile">
-              <div className="ph-reveal" data-delay="550">
-                <ReelCard image="https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160507_2ccbb4eb-1469-484f-af25-59168ad9a233-0c7429.webp&w=1280&q=85">
-                  <PlayRow label="View Reel" />
-                </ReelCard>
+            {/* shared centered heading */}
+            <div className="ph-s1-heading">
+              <div className="ph-reveal" data-delay="300">
+                <div className="ph-heading-serif ph-h-fall">REMOVE <span className="ph-gt">&rsaquo;</span> <span className="ph-italic">REFINE</span></div>
+                <div className="ph-heading-serif ph-h-rev">INTELLIGENCE</div>
+                <div className="ph-body-sans ph-sub">Free, unlimited, no signup. Upload any image — AI strips backgrounds and upscales edges to 4x in seconds.</div>
               </div>
             </div>
+
+            {/* mobile */}
+            <div className="ph-s1-mobile" />
 
             {/* tablet */}
             <div className="ph-s1-tablet">
               <div className="ph-reveal ph-tablet-cards" data-delay="550">
                 <ReelCard image="https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160507_2ccbb4eb-1469-484f-af25-59168ad9a233-0c7429.webp&w=1280&q=85">
-                  <PlayRow label="Remove BG" />
-                </ReelCard>
-                <ReelCard image="https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160644_072a7f68-a101-4ded-a332-7d37707dbdd1-bfae0e.webp&w=1280&q=85">
-                  <PlayRow num="2" label="Free Studio Tools" numStyle={{ fontSize: 28, lineHeight: 1 }} />
+                  <PlayRow label="Background Remover" />
                 </ReelCard>
                 <ReelCard image="https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160706_1c153d04-0dfb-4ac9-a4ef-e74f301c329c-8b9d4e.webp&w=1280&q=85">
-                  <PlayRow label="Upscale 4x" />
+                  <PlayRow label="Upscaler" />
                 </ReelCard>
               </div>
             </div>
 
             {/* desktop */}
             <div className="ph-s1-desktop">
-              <div className="ph-reveal ph-s1-desk-heading" data-delay="300">
-                <div className="ph-heading-serif ph-h-fall">REMOVE <span className="ph-gt">&rsaquo;</span> <span className="ph-italic">REFINE</span></div>
-                <div className="ph-heading-serif ph-h-rev">INTELLIGENCE</div>
-                <div className="ph-body-sans ph-sub">Free, unlimited, no signup. Upload any image — AI strips backgrounds and upscales edges to 4x in seconds.</div>
-              </div>
               <div className="ph-reveal ph-s1-desk-cards" data-delay="550">
                 <div className="ph-reel-card ph-desk-card" style={{ backgroundImage: "url('https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160507_2ccbb4eb-1469-484f-af25-59168ad9a233-0c7429.webp&w=1280&q=85')" }}>
                   <div className="ph-card-grad"></div><div className="ph-card-blur"></div>
-                  <div className="ph-card-content"><PlayRow dotSize={11} label="Remove BG" /></div>
-                </div>
-                <div className="ph-reel-card ph-desk-card" style={{ backgroundImage: "url('https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160644_072a7f68-a101-4ded-a332-7d37707dbdd1-bfae0e.webp&w=1280&q=85')" }}>
-                  <div className="ph-card-grad"></div><div className="ph-card-blur"></div>
-                  <div className="ph-card-content"><PlayRow num="2" label="Free Studio Tools" numStyle={{ opacity: 0.85 }} /></div>
+                  <div className="ph-card-content"><PlayRow dotSize={11} label="Background Remover" /></div>
                 </div>
                 <div className="ph-reel-card ph-desk-card" style={{ backgroundImage: "url('https://plugin-assets.open-design.ai/plugins/dreamcore-landing/hf_20260525_160706_1c153d04-0dfb-4ac9-a4ef-e74f301c329c-8b9d4e.webp&w=1280&q=85')" }}>
                   <div className="ph-card-grad"></div><div className="ph-card-blur"></div>
-                  <div className="ph-card-content"><PlayRow dotSize={11} label="Upscale 4x" /></div>
+                  <div className="ph-card-content"><PlayRow dotSize={11} label="Upscaler" /></div>
                 </div>
               </div>
             </div>

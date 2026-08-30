@@ -1,6 +1,6 @@
 import { ensureAuth, forceNewIdentity, appStartup, HEADERS } from './_lib/firebase.js';
 import { checkRateLimit, getClientIp } from './_lib/ratelimit.js';
-import { recordUsage } from './_lib/stats.js';
+import { recordUsage, recordVisitor } from './_lib/stats.js';
 
 function json(res, obj, status = 200, extraHeaders = {}) {
   for (const [k, v] of Object.entries(extraHeaders)) res.setHeader(k, v);
@@ -37,6 +37,8 @@ export default async function handler(req, res) {
     recordUsage({ tool: 'bg-remove', ok, ms: Date.now() - startTime, ip, errCode: ok ? null : res.statusCode });
     return _end.call(this, chunk, encoding, callback);
   };
+
+  recordVisitor(ip);
 
   if (req.method !== 'POST') {
     return json(res, { error: 'Method not allowed' }, 405);

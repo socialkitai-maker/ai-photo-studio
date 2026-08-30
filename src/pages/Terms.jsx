@@ -9,7 +9,7 @@ export default function Terms() {
     <div className="min-h-screen bg-[#0a0608] text-white pt-24 pb-12 flex flex-col font-['Outfit']">
       <PageMeta 
         title="Terms of Service — AI Photo Studio" 
-        description="Terms of service and usage guidelines for AI Photo Studio tools." 
+        description="Terms of service and usage guidelines for AI Photo Studio's free background remover and image upscaler tools." 
         canonical="/terms" 
       />
       <SiteNav />

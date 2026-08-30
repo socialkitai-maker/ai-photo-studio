@@ -147,7 +147,9 @@ export default function Admin() {
 
         <div className="bg-amber-500/10 border border-amber-500/20 text-amber-200/80 rounded-xl p-4 mb-8 text-sm flex items-start gap-3">
           <span className="text-lg leading-none">⚠️</span>
-          <p>Best-effort data from current serverless instance. Resets on cold starts. Auto-refreshes every 8 seconds.</p>
+          <p>{stats?.error
+            ? `DB not connected — ${stats.error}. Set WEB_DB_URL (Supabase) to see live user/usage data.`
+            : 'Live data from the web Postgres database. Auto-refreshes every 8 seconds.'}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -156,6 +158,16 @@ export default function Admin() {
             <div className="text-6xl font-['Fraunces'] text-[rgba(255,220,180,0.85)]">
               {stats?.usersOnline ?? '-'}
             </div>
+            <div className="flex gap-6 mt-4 text-sm text-white/60">
+              <div>
+                <div className="text-2xl font-['Fraunces'] text-white/90">{stats?.usersToday ?? '-'}</div>
+                <div className="text-xs uppercase tracking-wider">Today</div>
+              </div>
+              <div>
+                <div className="text-2xl font-['Fraunces'] text-white/90">{stats?.usersTotal ?? '-'}</div>
+                <div className="text-xs uppercase tracking-wider">All Time</div>
+              </div>
+            </div>
           </div>
           <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
             <ToolCard name="bg-remove" data={stats?.tools?.['bg-remove']} />
@@ -163,10 +175,10 @@ export default function Admin() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-1">
-            <h2 className="text-xl font-['Fraunces'] text-white/90 mb-4 border-b border-white/10 pb-2">Tool Health</h2>
-            <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl p-6">
+            <h2 className="text-lg font-['Fraunces'] text-white/90 mb-4 border-b border-white/10 pb-2">Tool Health</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {['bg-remove', 'upscale'].map(tool => (
                 <div key={tool} className="bg-white/5 rounded-xl p-4 border border-white/5">
                   <div className="text-sm text-white/60 capitalize mb-1">{tool.replace('-', ' ')}</div>
@@ -176,14 +188,26 @@ export default function Admin() {
                 </div>
               ))}
             </div>
-            <div className="mt-8 text-xs text-white/40">
-              Instance Started:<br/>
-              {stats?.instanceStarted ? new Date(stats.instanceStarted).toLocaleString() : 'N/A'}
-            </div>
           </div>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <h2 className="text-lg font-['Fraunces'] text-white/90 mb-4 border-b border-white/10 pb-2">Poll Votes</h2>
+            {!stats?.poll?.length ? (
+              <p className="text-white/40 text-sm">No votes yet</p>
+            ) : (
+              <ul className="space-y-3">
+                {stats.poll.map(v => (
+                  <li key={v.option_key} className="flex justify-between text-sm">
+                    <span className="text-white/80 capitalize">{v.option_key}</span>
+                    <span className="text-[rgba(255,220,180,0.85)] font-medium">{v.n}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
 
-          <div className="lg:col-span-3">
-            <h2 className="text-xl font-['Fraunces'] text-white/90 mb-4 border-b border-white/10 pb-2">Recent Activity</h2>
+        <div>
+          <h2 className="text-xl font-['Fraunces'] text-white/90 mb-4 border-b border-white/10 pb-2">Recent Activity</h2>
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
@@ -225,6 +249,5 @@ export default function Admin() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

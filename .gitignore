@@ -4,4 +4,5 @@ dist
 .env.local
 *.log
 *.md
+!README.md
 .vercel

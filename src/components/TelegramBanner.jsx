@@ -89,6 +89,20 @@ export default function TelegramBanner() {
             >
               Open @AiBgRemover_Bot
             </a>
+            <a
+              href="https://bondin.io/sycoishere"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-12 px-8 text-sm flex items-center justify-center rounded-full transition-all hover:brightness-125"
+              style={{
+                border: '1px solid rgba(255,255,255,0.18)',
+                color: 'rgba(255,255,255,0.7)',
+                backgroundColor: 'rgba(255,255,255,0.03)',
+                fontFamily: "'Outfit', sans-serif",
+              }}
+            >
+              Support the project ☕
+            </a>
             <span className="text-white/30 text-xs">Free &middot; No signup required</span>
           </div>
         </div>

@@ -9,7 +9,7 @@ export default function Privacy() {
     <div className="min-h-screen bg-[#0a0608] text-white pt-24 pb-12 flex flex-col font-['Outfit']">
       <PageMeta 
         title="Privacy Policy — AI Photo Studio" 
-        description="Read our privacy policy. We respect your privacy, do not store your images, and do not track you." 
+        description="Privacy policy for AI Photo Studio. We do not store your images, do not require signup, and do not track you across sites." 
         canonical="/privacy" 
       />
       <SiteNav />

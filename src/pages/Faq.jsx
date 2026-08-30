@@ -82,8 +82,8 @@ export default function Faq() {
   return (
     <div className="min-h-screen bg-[#0a0608] text-white pt-24 pb-12 flex flex-col font-['Outfit']">
       <PageMeta 
-        title="FAQ — AI Photo Studio" 
-        description="Frequently asked questions about AI Photo Studio's free image editing tools, privacy, and technical capabilities." 
+        title="FAQ — Free Background Remover & Image Upscaler | AI Photo Studio" 
+        description="Answers about AI Photo Studio's free background remover and 4x image upscaler: privacy, file formats, size limits, commercial use and more." 
         canonical="/faq"
         jsonLd={faqJsonLd}
       />

@@ -1,4 +1,5 @@
 import PortalHero from '../components/PortalHero';
+import { Link } from 'react-router-dom';
 import ToolCard from '../components/ToolCard';
 import TelegramBanner from '../components/TelegramBanner';
 import HowItWorks from '../components/HowItWorks';
@@ -7,7 +8,9 @@ import SectionKicker from '../components/SectionKicker';
 import SectionDivider from '../components/SectionDivider';
 import ToolsMarquee from '../components/ToolsMarquee';
 import CountUpStats from '../components/CountUpStats';
+import UpcomingPoll from '../components/UpcomingPoll';
 import AmbientBackground from '../components/AmbientBackground';
+import { SITE_URL } from '../lib/site';
 import { PageMeta } from '../hooks/usePageMeta';
 
 const tools = [
@@ -31,14 +34,15 @@ export default function Landing() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0608' }}>
       <PageMeta
-        title="AI Photo Studio — Remove Backgrounds & Upscale Free"
-        description="Remove backgrounds and upscale images instantly with AI. Professional results in seconds. Free, unlimited, no signup."
+        title="Free Background Remover & Image Upscaler — No Signup | AI Photo Studio"
+        description="Remove image backgrounds and upscale photos to 4x for free. AI-powered, no signup, no watermarks. JPG, PNG & WebP — instant transparent PNG downloads."
         canonical="/"
         jsonLd={[
           {
             "@context": "https://schema.org",
             "@type": "WebApplication",
             "name": "AI Photo Studio",
+            "url": SITE_URL,
             "applicationCategory": "MultimediaApplication",
             "operatingSystem": "All",
             "offers": {
@@ -49,13 +53,31 @@ export default function Landing() {
           },
           {
             "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "AI Photo Studio",
+            "url": SITE_URL,
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": `${SITE_URL}/tools?q={search_term_string}`,
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "AI Photo Studio",
+            "url": SITE_URL,
+            "logo": `${SITE_URL}/favicon.svg`
+          },
+          {
+            "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             "itemListElement": [
               {
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Home",
-                "item": "https://aiphotostudio.com/"
+                "item": SITE_URL
               }
             ]
           }
@@ -111,6 +133,36 @@ export default function Landing() {
           </p>
         </div>
       </section>
+
+      {/* Popular guides — internal linking for keywords */}
+      <section className="py-12 sm:py-16 px-4 sm:px-6 relative overflow-hidden">
+        <AmbientBackground variant="subtle" />
+        <div className="relative max-w-4xl mx-auto text-center">
+          <SectionKicker kicker="Learn the craft" title={<>POPULAR <span style={{ fontStyle: 'italic', color: 'rgba(255,220,180,0.85)' }}>›</span> <span style={{ fontStyle: 'italic' }}>GUIDES</span></>} />
+          <div className="flex flex-wrap justify-center gap-3 mt-8">
+            {[
+              { to: '/how-to/remove-background', label: 'How to Remove Background from an Image' },
+              { to: '/how-to/remove-green-screen', label: 'Remove Green Screen Background' },
+              { to: '/how-to/remove-background-product-photos', label: 'Product Photo Background Remover' },
+              { to: '/how-to/upscale-to-4k', label: 'Upscale Image to 4K' },
+              { to: '/how-to/upscale-image', label: 'Upscale Without Losing Quality' },
+              { to: '/tools', label: 'All Free Tools' },
+            ].map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="text-sm border border-white/15 px-4 py-2 hover:border-[rgba(255,220,180,0.5)] hover:text-[rgba(255,220,180,0.85)] transition-colors"
+                style={{ fontFamily: "'Outfit', sans-serif", color: 'rgba(255,255,255,0.65)' }}
+              >
+                {l.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Upcoming features + vote */}
+      <UpcomingPoll />
 
       {/* Telegram Banner */}
       <TelegramBanner />

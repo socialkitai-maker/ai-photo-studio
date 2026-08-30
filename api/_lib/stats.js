@@ -1,104 +1,123 @@
-// Module-level Maps for per-instance stats
-const usageLog = []; // Last 50 entries: { tool, ts, ok, ms, ip, errCode }
-const toolCounters = {
-  'bg-remove': { total: 0, success: 0, fail: 0, today: 0, hour: 0, totalMs: 0, lastRequest: null },
-  'upscale': { total: 0, success: 0, fail: 0, today: 0, hour: 0, totalMs: 0, lastRequest: null },
-};
-const onlineUsers = new Map(); // masked IP → timestamp
-const instanceStart = Date.now();
+import { getWebPool, ensureWebTables } from './webdb.js';
+import crypto from 'crypto';
 
-let lastDailyReset = new Date().getDate();
-let lastHourlyReset = new Date().getHours();
+let pool = null;
+let tableReady = false;
 
 function maskIp(ip) {
-  // Keep first 3 octets only: "1.2.3.4" → "1.2.3.***"
   if (!ip) return 'unknown';
   const parts = ip.split('.');
   if (parts.length === 4) return parts.slice(0, 3).join('.') + '.***';
-  return ip.replace(/:[\da-f]+$/i, ':***'); // IPv6
+  return ip.replace(/:[\da-f]+$/i, ':***');
 }
 
-function pruneOnline() {
-  const cutoff = Date.now() - 60000; // 60s TTL
-  for (const [ip, ts] of onlineUsers) {
-    if (ts < cutoff) onlineUsers.delete(ip);
-  }
+function hashIp(ip) {
+  if (!ip) return 'unknown';
+  return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 24);
 }
 
-function resetIfNeeded() {
-  const now = new Date();
-  const currentDate = now.getDate();
-  const currentHour = now.getHours();
-
-  if (currentDate !== lastDailyReset) {
-    for (const tool of Object.values(toolCounters)) {
-      tool.today = 0;
-    }
-    lastDailyReset = currentDate;
-  }
-
-  if (currentHour !== lastHourlyReset) {
-    for (const tool of Object.values(toolCounters)) {
-      tool.hour = 0;
-    }
-    lastHourlyReset = currentHour;
-  }
-}
-
-export function recordUsage({ tool, ok, ms, ip, errCode }) {
+async function db() {
+  if (tableReady) return pool;
+  pool = getWebPool();
+  if (!pool) return null;
   try {
-    resetIfNeeded();
-    const maskedIp = maskIp(ip);
-    const now = Date.now();
-    
-    // Update online heartbeat
-    onlineUsers.set(maskedIp, now);
-    pruneOnline();
-    
-    // Update counters
-    const c = toolCounters[tool];
-    if (c) {
-      c.total++;
-      if (ok) c.success++; else c.fail++;
-      c.today++;
-      c.hour++;
-      c.totalMs += (ms || 0);
-      c.lastRequest = now;
-    }
-    
-    // Add to log (keep last 50)
-    usageLog.push({ tool, ts: now, ok, ms: ms || 0, ip: maskedIp, errCode: errCode || null });
-    while (usageLog.length > 50) usageLog.shift();
+    await ensureWebTables(pool);
+    tableReady = true;
   } catch (e) {
-    // Never throw — fire and forget
+    tableReady = false;
+    return null;
+  }
+  return pool;
+}
+
+export async function recordUsage({ tool, ok, ms, ip, errCode }) {
+  try {
+    const p = await db();
+    if (!p) return;
+    const masked = maskIp(ip);
+    await p.query(
+      'INSERT INTO web_requests (tool, ok, ms, ip_masked, err_code) VALUES ($1, $2, $3, $4, $5)',
+      [tool, !!ok, ms || 0, masked, errCode || null]
+    );
+  } catch (e) {
+    // never throw — fire and forget
   }
 }
 
-export function getStats() {
+export async function recordVisitor(ip) {
   try {
-    resetIfNeeded();
-    pruneOnline();
+    const p = await db();
+    if (!p) return;
+    const h = hashIp(ip);
+    await p.query(
+      `INSERT INTO web_visitors (ip_hash) VALUES ($1)
+       ON CONFLICT (ip_hash) DO UPDATE SET last_seen = NOW()`,
+      [h]
+    );
+  } catch (e) {
+    // never throw
+  }
+}
+
+export async function getStats() {
+  try {
+    const p = await db();
+    if (!p) {
+      return { error: 'Database not configured (WEB_DB_URL missing)' };
+    }
+
+    const tools = {};
+    for (const tool of ['bg-remove', 'upscale']) {
+      const all = await p.query(
+        'SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE ok)::int AS success, COUNT(*) FILTER (WHERE NOT ok)::int AS fail, COALESCE(AVG(ms),0)::int AS avgms, MAX(created_at) AS last_req FROM web_requests WHERE tool = $1',
+        [tool]
+      );
+      const today = await p.query(
+        "SELECT COUNT(*)::int AS n FROM web_requests WHERE tool = $1 AND created_at::date = CURRENT_DATE",
+        [tool]
+      );
+      const hour = await p.query(
+        "SELECT COUNT(*)::int AS n FROM web_requests WHERE tool = $1 AND created_at > NOW() - interval '1 hour'",
+        [tool]
+      );
+      const r = all.rows[0];
+      tools[tool] = {
+        total: r.total,
+        success: r.success,
+        fail: r.fail,
+        avgMs: r.avgms,
+        today: today.rows[0].n,
+        hour: hour.rows[0].n,
+        lastRequest: r.last_req ? new Date(r.last_req).getTime() : null,
+      };
+    }
+
+    const users = await p.query("SELECT COUNT(*)::int AS total FROM web_visitors");
+    const usersToday = await p.query("SELECT COUNT(*)::int AS n FROM web_visitors WHERE last_seen > NOW() - interval '24 hours'");
+    const online = await p.query("SELECT COUNT(*)::int AS n FROM web_visitors WHERE last_seen > NOW() - interval '10 minutes'");
+
+    const recent = await p.query(
+      'SELECT tool, ok, ms, ip_masked, err_code, created_at FROM web_requests ORDER BY id DESC LIMIT 50'
+    );
+
+    const poll = await p.query('SELECT option_key, COUNT(*)::int AS n FROM poll_votes GROUP BY option_key');
+
     return {
-      usersOnline: onlineUsers.size,
-      tools: {
-        'bg-remove': {
-          ...toolCounters['bg-remove'],
-          avgMs: toolCounters['bg-remove'].total > 0
-            ? Math.round(toolCounters['bg-remove'].totalMs / toolCounters['bg-remove'].total)
-            : 0,
-        },
-        'upscale': {
-          ...toolCounters['upscale'],
-          avgMs: toolCounters['upscale'].total > 0
-            ? Math.round(toolCounters['upscale'].totalMs / toolCounters['upscale'].total)
-            : 0,
-        },
-      },
-      recentActivity: [...usageLog].reverse(),
-      instanceStarted: instanceStart,
-      note: 'Best-effort in-memory data from a single serverless instance. Resets on cold starts.',
+      usersTotal: users.rows[0].total,
+      usersToday: usersToday.rows[0].n,
+      usersOnline: online.rows[0].n,
+      tools,
+      poll: poll.rows,
+      recentActivity: recent.rows.map((r) => ({
+        tool: r.tool,
+        ok: r.ok,
+        ms: r.ms,
+        ip: r.ip_masked,
+        errCode: r.err_code,
+        ts: new Date(r.created_at).getTime(),
+      })),
     };
   } catch (e) {
-    return { error: 'Failed to retrieve stats' };
+    return { error: 'Stats query failed' };
   }
 }

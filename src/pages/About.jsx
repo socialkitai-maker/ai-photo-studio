@@ -9,8 +9,8 @@ export default function About() {
   return (
     <div className="min-h-screen bg-[#0a0608] text-white pt-24 pb-12 flex flex-col font-['Outfit']">
       <PageMeta 
-        title="About AI Photo Studio — Free AI Image Tools" 
-        description="Learn about AI Photo Studio, our mission to make professional image editing accessible, and our core values of privacy and free access." 
+        title="About AI Photo Studio — Free Background Remover & Image Upscaler" 
+        description="AI Photo Studio offers free, no-signup AI photo tools: remove image backgrounds and upscale photos to 4x. Privacy-first, no watermarks, unlimited." 
         canonical="/about" 
       />
       <SiteNav />
