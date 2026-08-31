@@ -346,8 +346,17 @@ export default function PortalHero() {
               </div>
             </div>
 
-            {/* mobile */}
-            <div className="ph-s1-mobile" />
+            {/* mobile tool cards — visible only on < 768px via CSS */}
+            <div className="ph-s1-mobile">
+              <div className="ph-reveal" data-delay="550" style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                <ReelCard href="/tools/bg-remove" image="/remove-bg.jpg">
+                  <PlayRow label="Background Remover" />
+                </ReelCard>
+                <ReelCard href="/tools/upscale" image="/upscaler.jpg">
+                  <PlayRow label="Upscaler" />
+                </ReelCard>
+              </div>
+            </div>
 
             {/* tablet */}
             <div className="ph-s1-tablet">

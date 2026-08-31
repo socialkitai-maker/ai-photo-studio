@@ -153,6 +153,9 @@
 .ph-reel-link .ph-reel-label { transition: color 0.2s ease; }
 .ph-reel-link:hover .ph-reel-label { color: rgba(255,220,180,1); }
 
+/* mobile scene1 — hidden on tablet+ */
+.ph-s1-mobile { display: none; }
+
 /* tablet scene1 */
 .ph-s1-tablet {
   display: none; position: absolute; inset: 0; z-index: 1;
@@ -251,3 +254,73 @@
 }
 .ph-arc-title { font-family: 'Viaoda Libre', serif; color: #3a2530; }
 .ph-arc-desc { font-family: 'Outfit', sans-serif; color: rgba(58,37,48,0.65); }
+
+/* ═══════════════════════════════════════════
+   MOBILE-ONLY OVERRIDES  (max-width: 767px)
+   Desktop layout is 100% untouched.
+   ═══════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  /* 1 ── Scene height: quicker sticky scroll on mobile ── */
+  .ph-scene { height: 180vh; }
+
+  /* 2 ── Heading positioning & font compression ── */
+  .ph-s1-heading {
+    top: 38%;
+    padding: 0 16px;
+  }
+  .ph-s1-heading .ph-h-fall {
+    font-size: clamp(17px, 5.5vw, 28px);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    line-height: 1.25;
+  }
+  .ph-s1-heading .ph-h-rev {
+    font-size: clamp(34px, 11.5vw, 54px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
+  .ph-s1-heading .ph-sub {
+    font-size: 12.5px;
+    line-height: 1.55;
+    max-width: 260px;
+    padding: 0 8px;
+    margin-top: 10px;
+  }
+
+  /* 3 ── Mobile tool cards (visible only < 768) ── */
+  .ph-s1-mobile {
+    display: flex !important;
+    position: absolute;
+    left: 0; right: 0;
+    top: 72%;
+    transform: translateY(-50%);
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    z-index: 3;
+    padding: 0 20px;
+  }
+  .ph-s1-mobile .ph-reel-card {
+    width: 120px;
+    height: 120px;
+    border-radius: 18px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.55);
+  }
+  .ph-s1-mobile .ph-reel-label {
+    font-size: 11px;
+  }
+  .ph-s1-mobile .ph-reel-dot {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* 4 ── Arc slider: prevent horizontal bleed ── */
+  #ph-slider {
+    overflow: hidden;
+    bottom: 50px;
+  }
+
+  /* 5 ── Dots spacing tighter ── */
+  #ph-dots { bottom: 18px; }
+}

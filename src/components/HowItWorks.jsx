@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import SectionKicker from './SectionKicker';
 import AmbientBackground from './AmbientBackground';
@@ -52,6 +52,7 @@ function ProgressDot({ index, count, scrollYProgress }) {
   return <motion.span className="h-1.5 rounded-full" style={{ width: 42, background }} />;
 }
 
+/* ── Desktop StepCard (unchanged) ── */
 function StepCard({ step }) {
   return (
     <div
@@ -86,13 +87,116 @@ function StepCard({ step }) {
   );
 }
 
+/* ── Mobile StepCard (compact vertical) ── */
+function MobileStepCard({ step, index }) {
+  return (
+    <motion.div
+      className="relative flex flex-col items-center text-center p-6 rounded-2xl"
+      style={{
+        borderLeft: `3px solid ${step.color}`,
+        background: 'rgba(255,255,255,0.02)',
+      }}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.6, delay: index * 0.12, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <span
+        className="text-5xl leading-none mb-4"
+        style={{ fontFamily: "'Fraunces', serif", color: step.color }}
+      >
+        {step.number}
+      </span>
+      <div
+        className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+        style={{ backgroundColor: `${step.color}1a`, color: step.color }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+          {step.icon.props.children}
+        </svg>
+      </div>
+      <h3
+        className="text-xl text-white mb-2 uppercase"
+        style={{ fontFamily: "'Fraunces', serif" }}
+      >
+        {step.title}
+      </h3>
+      <p
+        className="text-sm leading-relaxed max-w-xs"
+        style={{ fontFamily: "'Outfit', sans-serif", color: 'rgba(255,255,255,0.6)' }}
+      >
+        {step.description}
+      </p>
+    </motion.div>
+  );
+}
+
+/* ── Hook: responsive breakpoint ── */
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < breakpoint : false
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    const handler = (e) => setIsMobile(e.matches);
+    setIsMobile(mql.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export default function HowItWorks() {
   const trackRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: trackRef, offset: ['start start', 'end end'] });
+  const isMobile = useIsMobile();
 
   const x = useTransform(scrollYProgress, [0, 1], ['0%', '-66.666%']);
   const monoOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
 
+  /* ═══════════════════════════════════
+     MOBILE — vertical scroll, no pin
+     ═══════════════════════════════════ */
+  if (isMobile) {
+    return (
+      <div className="relative" style={{ background: '#0a0608' }}>
+        {/* Ambient atmosphere */}
+        <AmbientBackground variant="subtle" />
+
+        {/* Section header */}
+        <div className="relative z-10 pt-16 pb-4 px-6">
+          <SectionKicker
+            kicker="Simple in three steps"
+            title="How it works"
+            align="center"
+          />
+        </div>
+
+        {/* Vertical cards */}
+        <div className="relative z-10 flex flex-col gap-6 px-5 pb-20">
+          {steps.map((step, i) => (
+            <MobileStepCard key={step.number} step={step} index={i} />
+          ))}
+        </div>
+
+        {/* Minimal mobile progress — vertical dots */}
+        <div className="flex items-center justify-center gap-2 pb-10">
+          {steps.map((step, i) => (
+            <span
+              key={i}
+              className="h-1.5 rounded-full"
+              style={{ width: 32, background: 'rgba(255,220,180,0.5)' }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  /* ═══════════════════════════════════════
+     DESKTOP — pinned horizontal slider
+     (original behavior, untouched)
+     ═══════════════════════════════════════ */
   return (
     <div ref={trackRef} className="relative" style={{ height: '340vh' }}>
       <div className="sticky top-0 flex flex-col justify-center overflow-hidden" style={{ height: '100vh', background: '#0a0608' }}>

@@ -15,8 +15,10 @@ const About = lazy(() => import('./pages/About'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Faq = lazy(() => import('./pages/Faq'));
-const Links = lazy(() => import('./pages/Links'));
 const Admin = lazy(() => import('./pages/Admin'));
+
+// SEO programmatic tool pages (20 landing pages)
+const SeoToolPageRoute = lazy(() => import('./pages/tools/SeoToolPageRoute'));
 
 function PageLoader() {
   return (
@@ -54,10 +56,12 @@ export default function App() {
 
         {/* Trust pages */}
         <Route path="/about" element={<About />} />
-        <Route path="/links" element={<Links />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/faq" element={<Faq />} />
+
+        {/* SEO programmatic tool pages — catch-all for /tools/:slug */}
+        <Route path="/tools/:slug" element={<SeoToolPageRoute />} />
 
         {/* Admin */}
         <Route path="/admin" element={<Admin />} />

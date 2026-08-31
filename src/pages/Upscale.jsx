@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import ToolLayout from '../components/ToolLayout';
 import ProcessingOverlay from '../components/ProcessingOverlay';
 import ComparisonSlider from '../components/ComparisonSlider';
@@ -467,6 +467,34 @@ export default function Upscale() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Related SEO tool pages */}
+      <div style={{ marginTop: '40px', marginBottom: '60px' }}>
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>
+          Popular upscale tools
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
+          {[
+            { to: '/tools/ai-image-upscaler', label: 'AI Image Upscaler' },
+            { to: '/tools/upscale-image-8x', label: 'Upscale 8x' },
+            { to: '/tools/upscale-image-to-8k', label: 'Upscale to 8K' },
+            { to: '/tools/enhance-photo-quality', label: 'Enhance Photo Quality' },
+            { to: '/tools/unblur-image', label: 'Unblur Image' },
+            { to: '/tools/image-enlarger', label: 'Image Enlarger' },
+            { to: '/tools/photo-enhancer', label: 'Photo Enhancer' },
+            { to: '/tools/upscale-image-to-hd', label: 'Upscale to HD' },
+          ].map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="text-sm border border-white/15 px-3 py-1.5 hover:border-[rgba(255,220,180,0.5)] hover:text-[rgba(255,220,180,0.85)] transition-colors"
+              style={{ fontFamily: "'Outfit', sans-serif", color: 'rgba(255,255,255,0.6)' }}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
       </div>
     </ToolLayout>
   );

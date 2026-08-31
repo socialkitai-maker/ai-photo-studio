@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import ToolLayout from '../components/ToolLayout';
 import ProcessingOverlay from '../components/ProcessingOverlay';
 import ComparisonSlider from '../components/ComparisonSlider';
@@ -453,6 +453,33 @@ export default function BgRemove() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Related SEO tool pages */}
+      <div style={{ marginTop: '40px', marginBottom: '60px' }}>
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>
+          Popular background tools
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
+          {[
+            { to: '/tools/remove-white-background', label: 'Remove White Background' },
+            { to: '/tools/remove-background-product', label: 'Product Photo Cleaner' },
+            { to: '/tools/remove-green-screen-online', label: 'Green Screen Remover' },
+            { to: '/tools/remove-background-passport', label: 'Passport Photo Cutout' },
+            { to: '/tools/remove-background-from-photo', label: 'Photo Background Remover' },
+            { to: '/tools/background-eraser', label: 'Background Eraser' },
+            { to: '/tools/remove-background-profile-picture', label: 'Profile Picture Cutout' },
+          ].map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="text-sm border border-white/15 px-3 py-1.5 hover:border-[rgba(255,220,180,0.5)] hover:text-[rgba(255,220,180,0.85)] transition-colors"
+              style={{ fontFamily: "'Outfit', sans-serif", color: 'rgba(255,255,255,0.6)' }}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
       </div>
     </ToolLayout>
   );

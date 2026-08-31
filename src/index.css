@@ -15,6 +15,12 @@ html, body {
 
 html {
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* GPU-boosted smooth scroll for all elements */
+body {
+  -webkit-overflow-scrolling: touch;
 }
 
 *, *::before, *::after {

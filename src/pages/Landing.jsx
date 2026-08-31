@@ -142,10 +142,13 @@ export default function Landing() {
           <div className="flex flex-wrap justify-center gap-3 mt-8">
             {[
               { to: '/how-to/remove-background', label: 'How to Remove Background from an Image' },
-              { to: '/how-to/remove-green-screen', label: 'Remove Green Screen Background' },
-              { to: '/how-to/remove-background-product-photos', label: 'Product Photo Background Remover' },
+              { to: '/tools/remove-white-background', label: 'Remove White Background' },
+              { to: '/tools/remove-background-product', label: 'Product Photo Background Remover' },
+              { to: '/tools/remove-green-screen-online', label: 'Remove Green Screen Background' },
               { to: '/how-to/upscale-to-4k', label: 'Upscale Image to 4K' },
-              { to: '/how-to/upscale-image', label: 'Upscale Without Losing Quality' },
+              { to: '/tools/ai-image-upscaler', label: 'AI Image Upscaler' },
+              { to: '/tools/unblur-image', label: 'Unblur Image' },
+              { to: '/tools/enhance-photo-quality', label: 'Enhance Photo Quality' },
               { to: '/tools', label: 'All Free Tools' },
             ].map((l) => (
               <Link

@@ -51,11 +51,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://aiphotostudio.vercel.app/links</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
     <loc>https://aiphotostudio.vercel.app/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
@@ -69,5 +64,106 @@
     <loc>https://aiphotostudio.vercel.app/faq</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <!-- SEO Programmatic Tool Pages -->
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/remove-white-background</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/remove-background-passport</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/remove-background-product</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/remove-green-screen-online</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/remove-background-profile-picture</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/remove-background-jpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/remove-background-png</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/background-remover-no-signup</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/background-eraser</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/remove-background-from-photo</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/photo-background-changer</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/cut-out-image</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/upscale-image-8x</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/upscale-image-to-8k</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/ai-image-upscaler</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/image-enlarger</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/enhance-photo-quality</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/unblur-image</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/photo-enhancer</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aiphotostudio.vercel.app/tools/upscale-image-to-hd</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>
